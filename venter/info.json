@@ -1,0 +1,7 @@
+{
+    "author" : ["valor"],
+    "description" : "Cog for venting anonymously From DMs to a guild",
+    "name" : "Venter",
+    "short": "venting anonymously!",
+    "ready": true
+}
