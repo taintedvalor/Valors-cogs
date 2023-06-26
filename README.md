@@ -8,5 +8,10 @@ The table below lists all available cogs, as well as their current state. If a c
 | Cog Name | Short | Ready? |
 | --- | --- | --- |
 | [Venter](#venter) | vent anonymously | ✅ |
+| [truthOrDare](#truthOrDare) | Play Truth or Dare | ✅ |
 
 `[p]vent <guild_id> <message>` - Vent Anonymously from Dms to a specific guild in a 🌬-venting-room
+
+| truthOrDare |
+`[p]truth [nsfw=False]` - Get a random truth question
+`[p]dare [nsfw=False]` - Get a random dare
