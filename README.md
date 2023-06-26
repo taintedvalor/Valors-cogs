@@ -12,13 +12,13 @@ The table below lists all available cogs, as well as their current state. If a c
 
 | venter |
 
-`[p]vent <guild_id> <message>` - Vent Anonymously from Dms to a specific guild in a 🌬-venting-room
+`[p]repo add Valors-cogs https://github.com/taintedvalor/Valors-cogs
+`[p]cog install venter
 
 | TruthOrDare |
 
-`[p]truth [nsfw=False]` - Get a random truth question
-
-`[p]dare [nsfw=False]` - Get a random dare
+`[p]repo add Valors-cogs https://github.com/taintedvalor/Valors-cogs
+`[p]cog install truthOrDare
 
 
 
