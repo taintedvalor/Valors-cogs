@@ -19,3 +19,14 @@ The table below lists all available cogs, as well as their current state. If a c
 `[p]truth [nsfw=False]` - Get a random truth question
 
 `[p]dare [nsfw=False]` - Get a random dare
+
+
+
+-------
+Credits
+-------
+
+* Thanks to AAA3A-cogs and Eris-Cogs used there code for reference
+  
+
+
