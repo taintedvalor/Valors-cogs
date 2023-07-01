@@ -1,0 +1,10 @@
+{
+    "author": ["valor (Valor_bound)"],
+    "install_msg": "Thank you for installing this cog!\nDo `[p]help` to get the list of commands and their description.",
+    "name": "Venter",
+    "short": "Vent anonymously!",
+    "description": "Cog for venting anonymously from DMs to a guild",
+    "disabled": false,
+    "tags": ["Venter", "anonymously"],
+    "min_bot_version": "3.5.0"
+}
