@@ -1,0 +1,10 @@
+{
+    "author": ["valor (Valor_bound)"],
+    "install_msg": "Thank you for installing this cog!\nDo `[p]help` to get the list of commands and their description.",
+    "name": "TruthOrDare",
+    "short": "Play the game Truth or Dare",
+    "description": "A cog to play the game Truth or Dare",
+    "disabled": false,
+    "tags": ["truth", "dare", "game"],
+    "min_bot_version": "3.5.0"
+}
