@@ -1,0 +1,8 @@
+{
+  "name": "Redirect",
+  "version": "1.0.0",
+  "author": "valor (Valor_bound)",
+  "description": "A cog that removes commands unless in specific channels or set to be ignored.",
+  "tags": ["redirect", "Command", "remove"],
+  "min_bot_version": "3.5.0"
+}
