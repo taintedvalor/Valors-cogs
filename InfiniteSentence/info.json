@@ -1,0 +1,8 @@
+{
+  "name": "PictureOnly",
+  "version": "1.0.0",
+  "author": "valor (Valor_bound)",
+  "description": "Set A picture-only channel for A guild.",
+  "tags": ["Picture", "Command", "Only"],
+  "min_bot_version": "3.5.0"
+}
