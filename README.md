@@ -8,13 +8,18 @@ The table below lists all available cogs, as well as their current state. If a c
 | Cog Name | Short | Ready? |
 | --- | --- | --- |
 | [Venter](#venter) | vent anonymously | ✅ |
-| [truthOrDare](#truthOrDare) | Play Truth or Dare | ✅ |
+| [Tod](#truthOrDare) | Play Truth or Dare | ✅ |
+| [Redirect](#Redirect) | vent anonymously | ✅ |
+| [PictureOnly](#PictureOnly) | Play Truth or Dare | ✅ |
+| [InfiniteSentence](#InfiniteSentence) | vent anonymously | ✅ |
+| [promotion](#promotion) | Play Truth or Dare | ❌ |
 
-| venter |
+
+| Venter |
 
 `[p]repo add Valors-cogs https://github.com/taintedvalor/Valors-cogs`
 
-`[p]cog install venter`
+`[p]cog install Valors-cogs venter`
 
 | Tod |
 
@@ -22,6 +27,30 @@ The table below lists all available cogs, as well as their current state. If a c
 
 `[p]cog install truthOrDare`
 
+| Redirect |
+
+`[p]repo add Valors-cogs https://github.com/taintedvalor/Valors-cogs`
+
+`[p]cog install Valors-cogs Redirect`
+
+| PictureOnly |
+
+`[p]repo add Valors-cogs https://github.com/taintedvalor/Valors-cogs`
+
+`[p]cog install Valors-cogs PictureOnly`
+
+| InfiniteSentence |
+
+`[p]repo add Valors-cogs https://github.com/taintedvalor/Valors-cogs`
+
+`[p]cog install Valors-cogs InfiniteSentence`
+
+
+| promotion |
+
+`[p]repo add Valors-cogs https://github.com/taintedvalor/Valors-cogs`
+
+`[p]cog install Valors-cogs promotion`
 
 
 -------
