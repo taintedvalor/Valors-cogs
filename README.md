@@ -25,7 +25,7 @@ The table below lists all available cogs, as well as their current state. If a c
 
 `[p]repo add Valors-cogs https://github.com/taintedvalor/Valors-cogs`
 
-`[p]cog install truthOrDare`
+`[p]cog install Tod`
 
 | Redirect |
 
