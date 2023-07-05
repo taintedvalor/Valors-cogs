@@ -1,5 +1,5 @@
 from discord import Embed, Message
-from redbot.core import commands, Config, checks, tasks
+from redbot.core import commands, Config, checks
 
 # Example Bounty class
 class Bounty:
