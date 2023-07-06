@@ -78,7 +78,7 @@ class BountyBoard(commands.Cog):
         if toggle_supervisor:
             supervisor = None  # Assign None as the default value
             supervisor_msg: Message = await ctx.send("Would you like to assign a supervisor for this bounty? (Type 'yes' or 'no')")
-            supervisor_response = await self.bot.wait_for("message", check=lambda m: m.author == ctx.author and m.channel == ctx.channel)
+            supervisor_response = await self.bot.wait_for("message", check=lambda mm.author == ctx.author and m.channel == ctx.channel)
 
             if supervisor_response.content.lower() == "yes":
                 supervisor_role_id = await self.config.guild(ctx.guild).supervisor_role()
@@ -132,24 +132,39 @@ class BountyBoard(commands.Cog):
 
         await ctx.send("Bounty not found!")
 
+    @bounty_group.command(name="take")
+    async def take_bounty(self, ctx, bounty_name):
+        for bounty in self.bounties:
+            if bounty.name.lower() == bounty_name.lower():
+                if not bounty.taken:
+                    bounty.taken = True
+                    bounty.taken_by = ctx.author
+                    await ctx.send(f"Bounty '{bounty.name}' has been taken by {ctx.author.mention}.")
+
+                    await bounty.poster.send(f"Your bounty '{bounty.name}' has been taken by {ctx.author.mention}. Please contact them for further details.")
+
+                    # Set status on the bounty board to pending with emojis
+                    bounty_embed = await self.get_bounty_embed(bounty)
+                    bounty_embed.set_field_at(0, name=bounty_embed.fields[0].name, value=":hourglass_flowing_sand: Pending", inline=False)
+                    await self.update_bounty_board(ctx.guild, ctx.channel, bounty_embed)
+                else:
+                    await ctx.send("This bounty has already been taken.")
+                return
+
+        await ctx.send("Bounty not found!")
+
     @bounty_group.command(name="board")
     async def bounty_board(self, ctx):
         await self.send_bounty_board(ctx.guild, ctx.channel)
 
-    def add_star(self, user):
-        if str(user.id) not in self.stars:
-            self.stars[str(user.id)] = 1
-        else:
-            self.stars[str(user.id)] += 1
-
     @bounty_group.command(name="stars")
-    async def stars(self, ctx):
+    async def bounty_stars(self, ctx):
         user_id = str(ctx.author.id)
         star_count = self.stars.get(user_id, 0)
         await ctx.send(f"{ctx.author.mention} has {star_count} stars.")
 
     @bounty_group.command(name="top")
-    async def top_stars(self, ctx):
+    async def bounty_top_stars(self, ctx):
         sorted_stars = sorted(self.stars.items(), key=lambda x: x[1], reverse=True)
 
         if not sorted_stars:
@@ -175,11 +190,35 @@ class BountyBoard(commands.Cog):
         for bounty in self.bounties:
             embed.add_field(
                 name=bounty.name,
-                value=f"Poster: {bounty.poster.mention}\nDescription: {bounty.description}\nReward: {bounty.reward}",
+                value=f"Poster: {bounty.poster.mention}\nDescription: {bounty.description}\nReward: {bounty.reward}\nStatus: {'Taken' if bounty.taken else 'Posted'}",
                 inline=False
             )
 
         await channel.send(embed=embed)
+
+    async def get_bounty_embed(self, bounty):
+        embed = Embed(title="Bounty Details", description="")
+
+        embed.add_field(
+            name=bounty.name,
+            value=f"Poster: {bounty.poster.mention}\nDescription: {bounty.description}\nReward: {bounty.reward}\nStatus: {'Taken' if bounty.taken else 'Posted'}",
+            inline=False
+        )
+
+        return embed
+
+    async def update_bounty_board(self, guild, channel, bounty_embed):
+        messages = await channel.history(limit=10).flatten()
+        for message in messages:
+            if message.author == self.bot.user and message.embeds:
+                embed = message.embeds[0]
+                if embed.title == "Bounty Board":
+                    await message.edit(embed=bounty_embed)
+                    return
+
+        # If no existing bounty board message is found, send a new one
+        new_message = await channel.send(embed=bounty_embed)
+        return new_message
 
 
 def setup(bot):
