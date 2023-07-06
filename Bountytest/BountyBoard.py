@@ -78,7 +78,7 @@ class BountyBoard(commands.Cog):
         if toggle_supervisor:
             supervisor = None  # Assign None as the default value
             supervisor_msg: Message = await ctx.send("Would you like to assign a supervisor for this bounty? (Type 'yes' or 'no')")
-            supervisor_response = await self.bot.wait_for("message", check=lambda mm.author == ctx.author and m.channel == ctx.channel)
+            supervisor_response = await self.bot.wait_for("message", check=lambda m.author == ctx.author and m.channel == ctx.channel)
 
             if supervisor_response.content.lower() == "yes":
                 supervisor_role_id = await self.config.guild(ctx.guild).supervisor_role()
