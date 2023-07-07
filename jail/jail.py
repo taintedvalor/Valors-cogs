@@ -1,4 +1,5 @@
 import asyncio
+import discord
 from discord import Embed, Message
 from redbot.core import commands, Config, checks
 
