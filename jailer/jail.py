@@ -8,12 +8,13 @@ class Jail(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.original_roles = {}
-
+        
     @commands.group()
     @commands.has_permissions(manage_roles=True)
     async def jailer(self, ctx):
         """Parent command for jail-related actions."""
-        await ctx.send_help()
+        if ctx.invoked_subcommand is None:
+            await ctx.invoke(self.bot.get_command("help"), "jailer")
 
     @jailer.command()
     async def jail(self, ctx, member: discord.Member):
@@ -50,7 +51,7 @@ class Jail(commands.Cog):
 
         await ctx.send(f'{member.mention} has been jailed.')
 
-    @jailer.command()
+    @jailer.command(name="unjail")
     async def unjail(self, ctx, member: discord.Member):
         # Find the jail category and jail role
         jail_category = discord.utils.get(ctx.guild.categories, name='Jail')
