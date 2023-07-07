@@ -37,7 +37,7 @@ class Jail(commands.Cog):
         # Set the jail role permissions
         for channel in ctx.guild.channels:
             if isinstance(channel, discord.TextChannel) and channel == jail_channel:
-                await channel.set_permissions(jail_role, read_messages=True, send_messages=True)
+                await channel.set_permissions(jail_role, read_messages=False, send_messages=False)
 
         # Set the jail channel permissions
         for role in ctx.guild.roles:
