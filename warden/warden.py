@@ -4,7 +4,7 @@ from discord import Embed, Message
 from redbot.core import commands, Config, checks
 
 
-class Jail(commands.Cog):
+class warden(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.original_roles = {}
