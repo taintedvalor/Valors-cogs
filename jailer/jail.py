@@ -13,7 +13,7 @@ class Jail(commands.Cog):
     @commands.has_permissions(manage_roles=True)
     async def jailer(self, ctx):
         """Parent command for jail-related actions."""
-            await ctx.send_help()
+        await ctx.send_help()
 
     @jailer.command()
     async def jail(self, ctx, member: discord.Member):
