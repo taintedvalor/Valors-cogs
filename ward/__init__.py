@@ -1,5 +1,5 @@
-from .warden import ward
+from .warden import jail
 
 
 async def setup(bot):
-    await bot.add_cog(ward(bot))
+    await bot.add_cog(jail(bot))
