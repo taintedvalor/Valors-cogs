@@ -4,7 +4,7 @@ from discord import Embed, Message
 from redbot.core import commands, Config, checks
 
 
-class ward(commands.Cog):
+class Jail(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.original_roles = {}
@@ -12,44 +12,38 @@ class ward(commands.Cog):
 
     @commands.group()
     @commands.has_permissions(manage_roles=True)
-    async def warden(self, ctx):
+    async def jailer(self, ctx):
         """Parent command for jail-related actions."""
         if ctx.invoked_subcommand is None:
             await ctx.send_help()
 
-    @warden.command()
+    @jailer.command()
     async def toggle_create(self, ctx):
         """Toggle the creation and deletion of jail category, text channel, and role."""
         self.create_channel_role = not self.create_channel_role
         status = "enabled" if self.create_channel_role else "disabled"
         await ctx.send(f"Creation and deletion of jail category, text channel, and role is now {status}.")
 
-    @warden.command()
+    @jailer.command()
     async def jail(self, ctx, member: discord.Member):
-        # Create the jail category if it doesn't exist and the toggle is enabled
         if self.create_channel_role:
+            # Check if jail category and jail text channel exist
             jail_category = discord.utils.get(ctx.guild.categories, name='Jail')
             if not jail_category:
-                jail_category = await ctx.guild.create_category('Jail')
+                await ctx.send("Please create the 'Jail' category before jailing someone.")
+                return
 
-            # Create the jail text channel
-            jail_channel = await jail_category.create_text_channel('jail')
-
-            # Set the jail text channel permissions
-            allowed_role_id = await self.config.guild(ctx.guild).allowed_role()
-            if allowed_role_id:
-                allowed_role = discord.utils.get(ctx.guild.roles, id=allowed_role_id)
-                if allowed_role:
-                    await jail_channel.set_permissions(allowed_role, send_messages=True, read_messages=True)
-            else:
-                await jail_channel.set_permissions(ctx.guild.default_role, read_messages=False)
+            jail_channel = discord.utils.get(jail_category.channels, name='jail')
+            if not jail_channel:
+                await ctx.send("Please create the 'jail' text channel under the 'Jail' category before jailing someone.")
+                return
 
         # Remove all roles from the member
         self.original_roles[member.id] = member.roles
         await member.edit(roles=[], reason='Jailed')
 
-        # Create and assign the jail role to the member if the toggle is enabled
         if self.create_channel_role:
+            # Create and assign the jail role to the member
             jail_role = await ctx.guild.create_role(name='Jail Role', permissions=discord.Permissions(send_messages=True, read_messages=True))
             await member.add_roles(jail_role, reason='Jailed')
 
@@ -60,12 +54,16 @@ class ward(commands.Cog):
 
         await ctx.send(f'{member.mention} has been jailed.')
 
-    @warden.command()
+    @jailer.command()
     async def unjail(self, ctx, member: discord.Member):
-        # Find the jail category and jail role if the toggle is enabled
         if self.create_channel_role:
+            # Check if jail category and jail role exist
             jail_category = discord.utils.get(ctx.guild.categories, name='Jail')
             jail_role = discord.utils.get(ctx.guild.roles, name='Jail Role')
+            
+            if not jail_category or not jail_role:
+                await ctx.send("Cannot unjail someone as the jail category or jail role is missing.")
+                return
 
             # Retrieve the original roles of the member
             original_roles = self.original_roles.get(member.id)
@@ -96,4 +94,4 @@ class ward(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(ward(bot))
+    bot.add_cog(Jail(bot))
