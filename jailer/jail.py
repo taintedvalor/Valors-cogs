@@ -3,6 +3,7 @@ import discord
 from discord import Embed, Message
 from redbot.core import commands, Config, checks
 
+
 class Jail(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -75,6 +76,9 @@ class Jail(commands.Cog):
             jail_channel = discord.utils.get(jail_category.channels, name='jail')
             await jail_channel.delete()
 
+            # Delete the jail role
+            await jail_role.delete()
+
             # Delete the jail category if no channels remain
             if len(jail_category.channels) == 0:
                 await jail_category.delete()
@@ -83,22 +87,6 @@ class Jail(commands.Cog):
         else:
             await ctx.send(f'{member.mention} is not currently jailed.')
 
-    @jailer.group(invoke_without_command=True)
-    async def setallowedrole(self, ctx):
-        """Set the allowed role to view the jail channel."""
-        await ctx.send_help()
-
-    @setallowedrole.command(name="add")
-    async def setallowedrole_add(self, ctx, role: discord.Role):
-        """Add the specified role as the allowed role."""
-        await self.config.guild(ctx.guild).allowed_role.set(role.id)
-        await ctx.send(f"The role '{role.name}' is now allowed to view the jail channel.")
-
-    @setallowedrole.command(name="remove")
-    async def setallowedrole_remove(self, ctx):
-        """Remove the allowed role."""
-        await self.config.guild(ctx.guild).allowed_role.clear()
-        await ctx.send("The allowed role has been cleared.")
 
 def setup(bot):
     bot.add_cog(Jail(bot))
