@@ -1,5 +1,5 @@
-from .warden import warden?
+from .warden import ward
 
 
 async def setup(bot):
-    await bot.add_cog(warden?(bot))
+    await bot.add_cog(ward(bot))
