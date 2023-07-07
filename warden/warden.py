@@ -4,7 +4,7 @@ from discord import Embed, Message
 from redbot.core import commands, Config, checks
 
 
-class warden(commands.Cog):
+class warden?(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.original_roles = {}
@@ -96,4 +96,4 @@ class warden(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(warden(bot))
+    bot.add_cog(warden?(bot))
