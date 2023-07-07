@@ -13,8 +13,14 @@ class Jail(commands.Cog):
         }
         self.config.register_guild(**default_guild_settings)
 
-    @commands.command()
+    @commands.group()
     @commands.has_permissions(manage_roles=True)
+    async def jailer(self, ctx):
+        """Parent command for jail-related actions."""
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help()
+
+    @jailer.command()
     async def jail(self, ctx, member: discord.Member):
         # Create the jail category if it doesn't exist
         jail_category = discord.utils.get(ctx.guild.categories, name='Jail')
@@ -49,8 +55,7 @@ class Jail(commands.Cog):
 
         await ctx.send(f'{member.mention} has been jailed.')
 
-    @commands.command()
-    @commands.has_permissions(manage_roles=True)
+    @jailer.command()
     async def unjail(self, ctx, member: discord.Member):
         # Find the jail category and jail role
         jail_category = discord.utils.get(ctx.guild.categories, name='Jail')
@@ -77,6 +82,18 @@ class Jail(commands.Cog):
             await ctx.send(f'{member.mention} has been unjailed.')
         else:
             await ctx.send(f'{member.mention} is not currently jailed.')
+
+    @jailer.command()
+    @commands.guild_only()
+    @commands.admin()
+    async def setallowedrole(self, ctx, role: discord.Role = None):
+        """Set the allowed role to view the jail channel."""
+        if role:
+            await self.config.guild(ctx.guild).allowed_role.set(role.id)
+            await ctx.send(f"The role '{role.name}' is now allowed to view the jail channel.")
+        else:
+            await self.config.guild(ctx.guild).allowed_role.clear()
+            await ctx.send("The allowed role has been cleared.")
 
 def setup(bot):
     bot.add_cog(Jail(bot))
