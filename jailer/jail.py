@@ -14,7 +14,7 @@ class Jail(commands.Cog):
     async def jailer(self, ctx):
         """Parent command for jail-related actions."""
         if ctx.invoked_subcommand is None:
-            await ctx.invoke(self.bot.get_command("help"), "jailer")
+            await ctx.send_help(self.jailer)
 
     @jailer.command()
     async def jail(self, ctx, member: discord.Member):
