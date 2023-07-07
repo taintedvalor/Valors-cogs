@@ -7,7 +7,7 @@ class Jail(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.original_roles = {}
-        self.allowed_roles = []  # List of role IDs allowed to access jail channel
+        self.allowed_roles = []  # List of role names allowed to access jail channel
 
     @commands.group()
     @commands.has_permissions(manage_roles=True)
@@ -31,18 +31,16 @@ class Jail(commands.Cog):
         await member.edit(roles=[], reason='Jailed')
 
         # Create and assign the jail role to the member
-        jail_role = await ctx.guild.create_role(name='Jail Role')
+        jail_role = await ctx.guild.create_role(name='Jail Role', permissions=discord.Permissions(send_messages=True, read_messages=True))
         await member.add_roles(jail_role, reason='Jailed')
 
-        # Set the jail role permissions
-        for channel in ctx.guild.channels:
-            if isinstance(channel, discord.TextChannel) and channel == jail_channel:
-                await channel.set_permissions(jail_role, read_messages=False, send_messages=False)
+        # Set the jail text channel permissions
+        await jail_channel.set_permissions(jail_role, send_messages=True, read_messages=True)
 
-        # Set the jail channel permissions
-        for role in ctx.guild.roles:
-            if role.id in self.allowed_roles or role == jail_role:
-                await jail_channel.set_permissions(role, read_messages=True, send_messages=True)
+        # Set the jail role permissions for other channels
+        for channel in ctx.guild.channels:
+            if channel != jail_channel:
+                await channel.set_permissions(jail_role, send_messages=False, read_messages=False)
 
         await ctx.send(f'{member.mention} has been jailed.')
 
@@ -59,9 +57,6 @@ class Jail(commands.Cog):
             # Remove the jail role from the member
             await member.remove_roles(jail_role, reason='Unjailed')
 
-            # Delete the jail role
-            await jail_role.delete()
-
             # Restore the original roles to the member
             await member.edit(roles=original_roles, reason='Unjailed')
 
@@ -77,24 +72,42 @@ class Jail(commands.Cog):
         else:
             await ctx.send(f'{member.mention} is not currently jailed.')
 
+    @jailer.command(name="setup")
+    @commands.is_owner()
+    async def jailer_setup(self, ctx):
+        """Create the jail category and role."""
+        guild = ctx.guild
+
+        # Create the jail category if it doesn't exist
+        jail_category = discord.utils.get(guild.categories, name='Jail')
+        if not jail_category:
+            await guild.create_category('Jail')
+
+        # Create the jail role if it doesn't exist
+        jail_role = discord.utils.get(guild.roles, name='Jail Role')
+        if not jail_role:
+            permissions = discord.Permissions(send_messages=True, read_messages=True)
+            await guild.create_role(name='Jail Role', permissions=permissions)
+
+        await ctx.send("Jail category and role created.")
+
     @jailer.command(name="allow")
     async def jailer_allow(self, ctx, role: discord.Role):
         """Allow a role to access the jail channel."""
-        if role.id not in self.allowed_roles:
-            self.allowed_roles.append(role.id)
+        if role.name not in self.allowed_roles:
+            self.allowed_roles.append(role.name)
             await ctx.send(f"{role.name} is now allowed to access the jail channel.")
         else:
             await ctx.send(f"{role.name} is already allowed to access the jail channel.")
 
-    @jailer.command(name="remove")
-    async def jailer_remove(self, ctx, role: discord.Role):
-        """Remove a role from the allowed list to access the jail channel."""
-        if role.id in self.allowed_roles:
-            self.allowed_roles.remove(role.id)
+    @jailer.command(name="disallow")
+    async def jailer_disallow(self, ctx, role: discord.Role):
+        """Disallow a role from accessing the jail channel."""
+        if role.name in self.allowed_roles:
+            self.allowed_roles.remove(role.name)
             await ctx.send(f"{role.name} is no longer allowed to access the jail channel.")
         else:
             await ctx.send(f"{role.name} is not currently allowed to access the jail channel.")
 
 def setup(bot):
     bot.add_cog(Jail(bot))
-
