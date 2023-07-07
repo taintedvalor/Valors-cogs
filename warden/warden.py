@@ -96,4 +96,4 @@ class Jail(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Jail(bot))
+    bot.add_cog(warden(bot))
