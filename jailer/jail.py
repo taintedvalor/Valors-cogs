@@ -8,17 +8,11 @@ class Jail(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.original_roles = {}
-        self.config = Config.get_conf(self, identifier=1234567890)
-        default_guild_settings = {
-            "allowed_role": None
-        }
-        self.config.register_guild(**default_guild_settings)
 
     @commands.group()
     @commands.has_permissions(manage_roles=True)
     async def jailer(self, ctx):
         """Parent command for jail-related actions."""
-        if ctx.invoked_subcommand is None:
             await ctx.send_help()
 
     @jailer.command()
