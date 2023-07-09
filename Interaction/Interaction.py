@@ -36,7 +36,7 @@ class InteractionsCog(commands.Cog):
         await self.display_gif(ctx, gif_path, f"{ctx.author.mention} punched {user.mention}")
 
     @commands.command()
-    async def kickk(self, ctx, user: discord.Member):
+    async def kick(self, ctx, user: discord.Member):
         gif_path = await self.get_random_anime_gif('anime kick')
         await self.display_gif(ctx, gif_path, f"{ctx.author.mention} kicked {user.mention}")
 
@@ -74,14 +74,14 @@ class InteractionsCog(commands.Cog):
 
     async def display_gif(self, ctx, gif_path, description):
         gif = imageio.mimread(gif_path)
-        for frame in gif:
+        for i, frame in enumerate(gif):
             # Convert the frame to bytes
             frame_bytes = frame.tobytes()
             # Create a file-like object from the bytes
-            frame_file = discord.File(frame_bytes, filename="frame.gif")
+            frame_file = discord.File(frame_bytes, filename=f"frame_{i}.gif")
             # Create an embed with the description and attach the frame as a file
             embed = discord.Embed(description=description)
-            embed.set_image(url="attachment://frame.gif")
+            embed.set_image(url=f"attachment://frame_{i}.gif")
             # Send the embed with the frame as a file
             await ctx.send(embed=embed, file=frame_file)
 
