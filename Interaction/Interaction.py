@@ -1,10 +1,11 @@
-import asyncio
 import discord
 from redbot.core import commands, Config
 import requests
 from bs4 import BeautifulSoup
 import random
 import imageio
+import time
+import os
 
 class InteractionsCog(commands.Cog):
     def __init__(self, bot):
@@ -90,5 +91,3 @@ class InteractionsCog(commands.Cog):
 
 def setup(bot):
     bot.add_cog(InteractionsCog(bot))
-
-
