@@ -4,6 +4,7 @@ from redbot.core import commands, Config
 import requests
 from bs4 import BeautifulSoup
 import random
+import imageio
 
 class InteractionsCog(commands.Cog):
     def __init__(self, bot):
@@ -11,61 +12,45 @@ class InteractionsCog(commands.Cog):
 
     @commands.command()
     async def hug(self, ctx, user: discord.Member):
-        gif_url = await self.get_random_anime_gif('anime hug', gif_only=True)
-        embed = discord.Embed(description=f"{ctx.author.mention} hugged {user.mention}")
-        embed.set_image(url=gif_url)
-        await ctx.send(embed=embed)
+        gif_path = await self.get_random_anime_gif('anime hug')
+        await self.display_gif(ctx, gif_path, f"{ctx.author.mention} hugged {user.mention}")
 
     @commands.command()
     async def kiss(self, ctx, user: discord.Member):
-        gif_url = await self.get_random_anime_gif('anime kiss', gif_only=True)
-        embed = discord.Embed(description=f"{ctx.author.mention} kissed {user.mention}")
-        embed.set_image(url=gif_url)
-        await ctx.send(embed=embed)
+        gif_path = await self.get_random_anime_gif('anime kiss')
+        await self.display_gif(ctx, gif_path, f"{ctx.author.mention} kissed {user.mention}")
 
     @commands.command()
     async def slap(self, ctx, user: discord.Member):
-        gif_url = await self.get_random_anime_gif('anime slap', gif_only=True)
-        embed = discord.Embed(description=f"{ctx.author.mention} slapped {user.mention}")
-        embed.set_image(url=gif_url)
-        await ctx.send(embed=embed)
+        gif_path = await self.get_random_anime_gif('anime slap')
+        await self.display_gif(ctx, gif_path, f"{ctx.author.mention} slapped {user.mention}")
 
     @commands.command()
     async def stab(self, ctx, user: discord.Member):
-        gif_url = await self.get_random_anime_gif('anime stab', gif_only=True)
-        embed = discord.Embed(description=f"{ctx.author.mention} stabbed {user.mention}")
-        embed.set_image(url=gif_url)
-        await ctx.send(embed=embed)
+        gif_path = await self.get_random_anime_gif('anime stab')
+        await self.display_gif(ctx, gif_path, f"{ctx.author.mention} stabbed {user.mention}")
 
     @commands.command()
     async def punch(self, ctx, user: discord.Member):
-        gif_url = await self.get_random_anime_gif('anime punch', gif_only=True)
-        embed = discord.Embed(description=f"{ctx.author.mention} punched {user.mention}")
-        embed.set_image(url=gif_url)
-        await ctx.send(embed=embed)
+        gif_path = await self.get_random_anime_gif('anime punch')
+        await self.display_gif(ctx, gif_path, f"{ctx.author.mention} punched {user.mention}")
 
     @commands.command()
     async def kickk(self, ctx, user: discord.Member):
-        gif_url = await self.get_random_anime_gif('anime kick', gif_only=True)
-        embed = discord.Embed(description=f"{ctx.author.mention} kicked {user.mention}")
-        embed.set_image(url=gif_url)
-        await ctx.send(embed=embed)
+        gif_path = await self.get_random_anime_gif('anime kick')
+        await self.display_gif(ctx, gif_path, f"{ctx.author.mention} kicked {user.mention}")
 
     @commands.command()
     async def stomp(self, ctx, user: discord.Member):
-        gif_url = await self.get_random_anime_gif('anime stomp', gif_only=True)
-        embed = discord.Embed(description=f"{ctx.author.mention} stomped on {user.mention}")
-        embed.set_image(url=gif_url)
-        await ctx.send(embed=embed)
+        gif_path = await self.get_random_anime_gif('anime stomp')
+        await self.display_gif(ctx, gif_path, f"{ctx.author.mention} stomped on {user.mention}")
 
-    async def get_random_anime_gif(self, query, gif_only=False):
+    async def get_random_anime_gif(self, query):
         try:
             search_results = self.google_search(query)
             gif_url = random.choice(search_results)
-            if gif_only:
-                gif_url = self.ensure_gif_format(gif_url)
-            high_res_gif_url = self.get_high_resolution_url(gif_url)
-            return high_res_gif_url
+            gif_path = await self.download_gif(gif_url)
+            return gif_path
         except Exception as e:
             print(f"Error fetching anime GIF: {e}")
 
@@ -78,15 +63,30 @@ class InteractionsCog(commands.Cog):
         image_urls = [element["src"] for element in image_elements if element["src"].startswith("http")]
         return image_urls
 
-    def ensure_gif_format(self, url):
-        if not url.lower().endswith('.gif'):
-            url += ".gif"
-        return url
+    async def download_gif(self, url):
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        gif_path = "temp.gif"  # Path to temporarily save the GIF
+        with open(gif_path, "wb") as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                file.write(chunk)
+        return gif_path
 
-    def get_high_resolution_url(self, url):
-        if url.lower().endswith('.gif'):
-            url = url.replace("giphy.gif", "giphy.webp")
-        return url
+    async def display_gif(self, ctx, gif_path, description):
+        gif = imageio.mimread(gif_path)
+        for frame in gif:
+            # Convert the frame to bytes
+            frame_bytes = frame.tobytes()
+            # Create a file-like object from the bytes
+            frame_file = discord.File(frame_bytes, filename="frame.gif")
+            # Create an embed with the description and attach the frame as a file
+            embed = discord.Embed(description=description)
+            embed.set_image(url="attachment://frame.gif")
+            # Send the embed with the frame as a file
+            await ctx.send(embed=embed, file=frame_file)
+
+        # Remove the temporary GIF file
+        os.remove(gif_path)
 
 def setup(bot):
     bot.add_cog(InteractionsCog(bot))
