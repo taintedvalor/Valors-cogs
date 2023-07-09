@@ -36,7 +36,7 @@ class InteractionsCog(commands.Cog):
         await self.display_gif(ctx, gif_path, f"{ctx.author.mention} punched {user.mention}")
 
     @commands.command()
-    async def kick(self, ctx, user: discord.Member):
+    async def kickk(self, ctx, user: discord.Member):
         gif_path = await self.get_random_anime_gif('anime kick')
         await self.display_gif(ctx, gif_path, f"{ctx.author.mention} kicked {user.mention}")
 
