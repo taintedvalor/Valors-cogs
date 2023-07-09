@@ -63,6 +63,7 @@ class Offend(commands.Cog):
 
         guild = message.guild
         global_reaction_emoji = await self.config.global_reaction_emoji()
+
         user_config = self.config.user(message.author)
         personal_reaction_emoji = await user_config.personal_reaction_emoji()
         active = await user_config.active()
