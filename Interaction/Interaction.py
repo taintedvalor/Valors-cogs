@@ -45,7 +45,7 @@ class InteractionsCog(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def kick(self, ctx, user: discord.Member):
+    async def kickk(self, ctx, user: discord.Member):
         gif_url = await self.get_random_anime_gif('anime kick')
         embed = discord.Embed(description=f"{ctx.author.mention} kicked {user.mention}")
         embed.set_image(url=gif_url)
