@@ -76,18 +76,15 @@ class InteractionsCog(commands.Cog):
     async def display_gif(self, ctx, gif_path, description):
         gif = imageio.mimread(gif_path)
         for i, frame in enumerate(gif):
-            # Convert the frame to bytes
-            frame_bytes = frame.tobytes()
-            # Create a file-like object from the bytes
-            frame_file = discord.File(frame_bytes, filename=f"frame_{i}.gif")
-            # Create an embed with the description and attach the frame as a file
+            frame_path = f"frame_{i}.gif"
+            imageio.imwrite(frame_path, frame, format='GIF-FI')  # Save the frame as a separate GIF file
+            frame_file = discord.File(frame_path, filename=frame_path)  # Create a file object from the frame file
             embed = discord.Embed(description=description)
-            embed.set_image(url=f"attachment://frame_{i}.gif")
-            # Send the embed with the frame as a file
+            embed.set_image(url=f"attachment://{frame_path}")
             await ctx.send(embed=embed, file=frame_file)
+            os.remove(frame_path)  # Remove the frame file after sending it
 
-        # Remove the temporary GIF file
-        os.remove(gif_path)
+        os.remove(gif_path)  # Remove the temporary GIF file
 
 def setup(bot):
     bot.add_cog(InteractionsCog(bot))
