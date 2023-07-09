@@ -1,14 +1,13 @@
 from redbot.core import commands, Config
 import discord
-import asyncio
 
 class Offend(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
         self.default_config = {
-            "reaction_time": 10,  # Default reaction time in seconds
-            "reaction_emoji": "🖕"  # Default reaction emoji
+            "reaction_emoji": "🖕",  # Default reaction emoji
+            "active_users": []  # List of active users
         }
         self.config.register_guild(**self.default_config)
 
@@ -17,14 +16,35 @@ class Offend(commands.Cog):
         """Manage offend settings."""
         pass
 
-    @offend_group.command(name="reactiontime")
-    async def set_reaction_time(self, ctx, time: int):
-        """Set the reaction time in seconds."""
-        if time <= 0:
-            await ctx.send("Reaction time must be a positive number.")
+    @offend_group.command(name="activate")
+    async def activate_offend(self, ctx):
+        """Activate offend reactions for the mentioned user."""
+        mentioned_users = ctx.message.mentions
+        if not mentioned_users:
+            await ctx.send("Please mention a user to activate offend reactions.")
             return
-        await self.config.guild(ctx.guild).reaction_time.set(time)
-        await ctx.send(f"Reaction time set to {time} seconds.")
+
+        active_users = await self.config.guild(ctx.guild).active_users()
+        for user in mentioned_users:
+            if user.id not in active_users:
+                active_users.append(user.id)
+        await self.config.guild(ctx.guild).active_users.set(active_users)
+        await ctx.send("Offend reactions activated.")
+
+    @offend_group.command(name="deactivate")
+    async def deactivate_offend(self, ctx):
+        """Deactivate offend reactions for the mentioned user."""
+        mentioned_users = ctx.message.mentions
+        if not mentioned_users:
+            await ctx.send("Please mention a user to deactivate offend reactions.")
+            return
+
+        active_users = await self.config.guild(ctx.guild).active_users()
+        for user in mentioned_users:
+            if user.id in active_users:
+                active_users.remove(user.id)
+        await self.config.guild(ctx.guild).active_users.set(active_users)
+        await ctx.send("Offend reactions deactivated.")
 
     @offend_group.command(name="reactionemoji")
     async def set_reaction_emoji(self, ctx, emoji: str):
@@ -38,16 +58,11 @@ class Offend(commands.Cog):
             return
 
         guild = message.guild
-        reaction_time = await self.config.guild(guild).reaction_time()
+        active_users = await self.config.guild(guild).active_users()
         reaction_emoji = await self.config.guild(guild).reaction_emoji()
 
-        if reaction_time > 0:
-            mentioned_users = message.mentions
-            for user in mentioned_users:
-                await message.add_reaction(reaction_emoji)
-                await asyncio.sleep(reaction_time)
-                await message.remove_reaction(reaction_emoji, self.bot.user)
-                await asyncio.sleep(0.5)  # Sleep for a short duration to avoid rate limits
+        if message.author.id in active_users:
+            await message.add_reaction(reaction_emoji)
 
 def setup(bot):
     bot.add_cog(Offend(bot))
