@@ -178,7 +178,7 @@ class RandImages(Core):
 
         await self._send_reddit_msg(
             ctx,
-            name=_f"{ctx.author.name} fucks {user.name}!",
+            name=f"{ctx.author.name} fucks {user.name}!",
             emoji="",
             sub=sub.Fuck,
             details=True,
