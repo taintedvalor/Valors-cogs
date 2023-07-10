@@ -181,7 +181,7 @@ class RandImages(Core):
             name=f"{ctx.author.name} fucks {user.name}!",
             emoji="",
             sub=sub.FUCK,
-            details=True,
+            details=False,
         )
 
     @commands.cooldown(1, 0.5, commands.BucketType.user)
