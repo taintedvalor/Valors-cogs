@@ -160,7 +160,7 @@ class RandImages(Core):
     @commands.bot_has_permissions(embed_links=True)
     @commands.command()
     async def rule34(self, ctx: commands.Context):
-        """Send a random photography from random subreddits."""
+        """Send a random rule34 image from random subreddits."""
 
         await self._send_reddit_msg(
             ctx,
@@ -169,6 +169,21 @@ class RandImages(Core):
             sub=sub.RULE34,
             details=True,
         )
+
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command()
+    async def fuck(self, ctx, user: commands.MemberConverter):
+        """Fuck someone."""
+
+        await self._send_reddit_msg(
+            ctx,
+            name=_f"{ctx.author.name} fucks {user.name}!",
+            emoji="",
+            sub=sub.Fuck,
+            details=True,
+        )
+
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     @commands.command()
