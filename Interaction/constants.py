@@ -64,3 +64,7 @@ RULE34 = [
     "CartoonRule34",
     "Rimuru_hentai",
 ]
+FUCK = [
+    "Hentigif",
+    "Roughsex",
+]
