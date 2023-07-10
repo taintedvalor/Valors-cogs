@@ -81,3 +81,19 @@ class RandImages(Core):
 
         )
 
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command(aliases=["summon"])
+    async def waifu(self, ctx, user: commands.MemberConverter):
+        """summon a waifu."""
+
+        await self._send_other_msg(
+            ctx,
+            name=_(f"{ctx.author.name} is summoning a waifu!"),
+            emoji="",
+            source="nekos.life",
+            img_url="https://nekos.life/api/v2/img/waifu",
+            img_arg="url",
+            facts=False,
+
+        )
