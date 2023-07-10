@@ -32,7 +32,7 @@ class RandImages(Core):
 
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
-    @commands.command(aliases=["backhand"])
+    @commands.command(aliases=["smack"])
     async def slap(self, ctx, user: commands.MemberConverter):
         """slap someone."""
 
@@ -42,6 +42,44 @@ class RandImages(Core):
             emoji="",
             source="nekos.life",
             img_url="https://nekos.life/api/v2/img/slap",
+            img_arg="url",
+            facts=False,
+
+        )
+
+        )
+
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command(aliases=["smooch"])
+    async def kiss(self, ctx, user: commands.MemberConverter):
+        """kiss someone."""
+
+        await self._send_other_msg(
+            ctx,
+            name=_(f"{ctx.author.name} kissed {user.name}!"),
+            emoji="",
+            source="nekos.life",
+            img_url="https://nekos.life/api/v2/img/kiss",
+            img_arg="url",
+            facts=False,
+
+        )
+
+        )
+
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command(aliases=["shank"])
+    async def stab(self, ctx, user: commands.MemberConverter):
+        """stab someone."""
+
+        await self._send_other_msg(
+            ctx,
+            name=_(f"{ctx.author.name} stabbed {user.name}!"),
+            emoji="",
+            source="nekos.life",
+            img_url="https://nekos.life/api/v2/img/stab",
             img_arg="url",
             facts=False,
 
