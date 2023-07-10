@@ -67,15 +67,15 @@ class RandImages(Core):
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     @commands.command(aliases=["shank"])
-    async def stomp(self, ctx, user: commands.MemberConverter):
-        """stomp someone."""
+    async def feed(self, ctx, user: commands.MemberConverter):
+        """feed someone."""
 
         await self._send_other_msg(
             ctx,
-            name=_(f"{ctx.author.name} stabbed {user.name}!"),
+            name=_(f"{ctx.author.name} is feeding {user.name}!"),
             emoji="",
             source="nekos.life",
-            img_url="https://nekos.life/api/v2/img/stomp",
+            img_url="https://nekos.life/api/v2/img/feed",
             img_arg="url",
             facts=False,
 
