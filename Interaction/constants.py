@@ -60,11 +60,6 @@ WALLPAPERS = [
     "WidescreenWallpaper",
 ]
 RULE34 = [
-    "wallpaper",
-    "iphonewallpapers",
-    "MinimalWallpaper",
-    "WQHD_Wallpaper",
-    "iWallpaper",
-    "topwalls",
-    "WidescreenWallpaper",
+    "rule34",
+    "CartoonRule34",
 ]
