@@ -175,14 +175,14 @@ class RandImages(Core):
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     @commands.command()
-    async def Punch(self, ctx, user: commands.MemberConverter):
+    async def punch(self, ctx, user: commands.MemberConverter):
         """Punch someone."""
         await self._send_other_msg(
             ctx,
             name=f"{ctx.author.name} Punchs {user.name}!",
             emoji="",
             source="nekos.life",
-            img_url="https://nekos.life/api/v2/img/Punch",
+            img_url="https://nekos.life/api/v2/img/punch",
             img_arg="url",
             facts=False,
         )
