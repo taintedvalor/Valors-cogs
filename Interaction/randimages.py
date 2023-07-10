@@ -5,6 +5,18 @@ from redbot.core.i18n import Translator, cog_i18n
 from .core import Core
 from . import constants as sub
 
+from logging import LoggerAdapter
+from typing import Final, Any
+
+import aiohttp
+import discord
+from redbot.core.bot import Red
+from redbot.core import commands
+from redbot.core.utils.chat_formatting import box
+from red_commons.logging import RedTraceLogger, getLogger
+
+from .core import ACTIONS, ICON, NEKOS
+
 
 _ = Translator("Image", __file__)
 
@@ -508,17 +520,6 @@ class RandImages(Core):
         )
 
 
-from logging import LoggerAdapter
-from typing import Final, Any
-
-import aiohttp
-import discord
-from redbot.core.bot import Red
-from redbot.core import commands
-from redbot.core.utils.chat_formatting import box
-from red_commons.logging import RedTraceLogger, getLogger
-
-from .corer import ACTIONS, ICON, NEKOS
 
 log: RedTraceLogger = getLogger("red.maxcogs.roleplaycog")
 
