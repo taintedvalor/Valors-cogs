@@ -59,8 +59,3 @@ WALLPAPERS = [
     "topwalls",
     "WidescreenWallpaper",
 ]
-RULE34 = [
-    "rule34",
-    "CartoonRule34",
-    "Rimuru_hentai",
-]
