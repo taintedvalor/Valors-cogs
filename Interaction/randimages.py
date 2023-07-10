@@ -97,3 +97,77 @@ class RandImages(Core):
             facts=False,
 
         )
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command()
+    async def smug(self, ctx, user: commands.MemberConverter):
+        """Express smugness."""
+        await self._send_other_msg(
+            ctx,
+            name=f"{ctx.author.name} smugs at {user.name}!",
+            emoji="😏",
+            source="nekos.life",
+            img_url="https://nekos.life/api/v2/img/smug",
+            img_arg="url",
+            facts=False,
+        )
+
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command()
+    async def baka(self, ctx, user: commands.MemberConverter):
+        """Call someone baka."""
+        await self._send_other_msg(
+            ctx,
+            name=f"{user.name}, baka!",
+            emoji="💢",
+            source="nekos.life",
+            img_url="https://nekos.life/api/v2/img/baka",
+            img_arg="url",
+            facts=False,
+        )
+
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command()
+    async def tickle(self, ctx, user: commands.MemberConverter):
+        """Tickle someone."""
+        await self._send_other_msg(
+            ctx,
+            name=f"{ctx.author.name} tickles {user.name}!",
+            emoji="😄",
+            source="nekos.life",
+            img_url="https://nekos.life/api/v2/img/tickle",
+            img_arg="url",
+            facts=False,
+        )
+
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command()
+    async def poke(self, ctx, user: commands.MemberConverter):
+        """Poke someone."""
+        await self._send_other_msg(
+            ctx,
+            name=f"{ctx.author.name} pokes {user.name}!",
+            emoji="👉",
+            source="nekos.life",
+            img_url="https://nekos.life/api/v2/img/poke",
+            img_arg="url",
+            facts=False,
+        )
+
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command()
+    async def pat(self, ctx, user: commands.MemberConverter):
+        """Pat someone."""
+        await self._send_other_msg(
+            ctx,
+            name=f"{ctx.author.name} pats {user.name}!",
+            emoji="👋",
+            source="nekos.life",
+            img_url="https://nekos.life/api/v2/img/pat",
+            img_arg="url",
+            facts=False,
+        )
