@@ -75,7 +75,7 @@ class RandImages(Core):
             name=_(f"{ctx.author.name} stabbed {user.name}!"),
             emoji="",
             source="nekos.life",
-            img_url="https://nekos.life/api/v2/img/stab",
+            img_url="https://nekos.life/api/v2/img/robe",
             img_arg="url",
             facts=False,
 
