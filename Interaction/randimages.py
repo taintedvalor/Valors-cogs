@@ -314,7 +314,7 @@ class RandImages(Core):
 
         await self._send_other_msg(
             ctx,
-            name=_("{ctx.author.mention} hugged {user.mention}!"),
+            name=_(f"{ctx.author.mention} hugged {user.mention}!"),
             emoji="\N{CAT FACE}",
             source="nekos.life",
             img_url="https://nekos.life/api/v2/img/hug",
