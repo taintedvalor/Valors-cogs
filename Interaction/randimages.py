@@ -309,12 +309,15 @@ class RandImages(Core):
     @commands.bot_has_permissions(embed_links=True)
     @commands.command(aliases=["cuddle"])
     async def hug(self, ctx: commands.Context):
-        """Send a random wallpaper image from random subreddits."""
+        """Send a random cat image some-random-api.ml API."""
 
-        await self._send_reddit_msg(
+        await self._send_other_msg(
             ctx,
-            name=_("{ctx.author.mention} hugged {user.mention}!"),
-            emoji="\N{FRAME WITH PICTURE}",
-            sub=sub.animecuddling,
-            details=False,
+            name=_("cat"),
+            emoji="\N{CAT FACE}",
+            source="nekos.life",
+            img_url="https://nekos.life/api/v2/img/hug",
+            img_arg="url",
+            facts=False,
+
         )
