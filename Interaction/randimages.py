@@ -155,3 +155,17 @@ class RandImages(Core):
             img_arg="url",
             facts=False,
         )
+
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command(aliases=["photography"])
+    async def rule34(self, ctx: commands.Context):
+        """Send a random photography from random subreddits."""
+
+        await self._send_reddit_msg(
+            ctx,
+            name=_("rule34"),
+            emoji="\N{CAMERA WITH FLASH}",
+            sub=sub.RULE34,
+            details=True,
+        )
