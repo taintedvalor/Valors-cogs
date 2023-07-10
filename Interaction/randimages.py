@@ -32,8 +32,8 @@ class RandImages(Core):
 
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
-    @commands.command(aliases=["cuddle"])
-    async def hug(self, ctx, user: commands.MemberConverter):
+    @commands.command(aliases=["backhand"])
+    async def slap(self, ctx, user: commands.MemberConverter):
         """slap someone."""
 
         await self._send_other_msg(
