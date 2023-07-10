@@ -190,7 +190,7 @@ class Core(commands.Cog):
         if url.endswith(GOOD_EXTENSIONS):
             em = await self._embed(
                 color=await ctx.embed_colour(),
-                title=(_(" {name} ... ") + emoji).format(name=name),
+                title=(_("{name}") + emoji).format(name=name),
                 description=bold(
                     _("[Link if you don't see image]({url})").format(url=url),
                     escape_formatting=False,
@@ -202,7 +202,7 @@ class Core(commands.Cog):
             )
         elif url.startswith("https://gfycat.com"):
             em = (
-                _(" {name} gif ... ")
+                _("{name}")
                 + emoji
                 + _("\n\nRequested by {req} • From {r}\n{url}")
             ).format(name=name, req=bold(ctx.author.display_name), r=bold(subr), url=url)
@@ -228,7 +228,7 @@ class Core(commands.Cog):
         if url.endswith(GOOD_EXTENSIONS):
             em = await self._embed(
                 color=await ctx.embed_colour(),
-                title=(_(" {name} ... ") + emoji).format(name=name),
+                title=(_("{name}") + emoji).format(name=name),
                 description=(
                     _(
                         "**Reddit Author:** {author}\n**Title:** {title}\n"
@@ -242,7 +242,7 @@ class Core(commands.Cog):
             )
         elif url.startswith("https://gfycat.com"):
             em = (
-                _(" {name} gif ... ")
+                _("{name}")
                 + emoji
                 + _(
                     "\n{url}\n\n**Reddit Author:** {author}\n**Title:** {title}\n"
@@ -268,7 +268,7 @@ class Core(commands.Cog):
             return
         em = await self._embed(
             color=await ctx.embed_colour(),
-            title=(_(" {name} image ... ") + emoji).format(name=name),
+            title=(_("{name}") + emoji).format(name=name),
             description=bold(
                 _("[Link if you don't see image]({url})").format(url=data["img"][img_arg]),
                 escape_formatting=False,
@@ -297,7 +297,7 @@ class Core(commands.Cog):
             return
         em = await self._embed(
             color=await ctx.embed_colour(),
-            title=(_(" {name} ... ") + emoji).format(name=name),
+            title=(_("{name}") + emoji).format(name=name),
             description=bold(
                 _("{fact}\n[Link if you don't see image]({url})").format(
                     fact=data["fact"][fact_arg], url=data["img"][img_arg]
