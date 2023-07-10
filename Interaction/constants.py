@@ -65,6 +65,5 @@ RULE34 = [
     "Rimuru_hentai",
 ]
 FUCK = [
-    "Roughsex",
     "hentaigamer",
 ]
