@@ -315,6 +315,7 @@ class RandImages(Core):
         await self._send_other_msg(
             ctx,
             name=_(f"{ctx.author.name} hugged {user.name}!"),
+            emoji="",
             source="nekos.life",
             img_url="https://nekos.life/api/v2/img/hug",
             img_arg="url",
