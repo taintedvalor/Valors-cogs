@@ -158,7 +158,7 @@ class RandImages(Core):
 
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
-    @commands.command(aliases=["photography"])
+    @commands.command()
     async def rule34(self, ctx: commands.Context):
         """Send a random photography from random subreddits."""
 
@@ -168,4 +168,19 @@ class RandImages(Core):
             emoji="\N{CAMERA WITH FLASH}",
             sub=sub.RULE34,
             details=True,
+        )
+
+
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command()
+    async def fuck(self, ctx: commands.Context):
+        """fuck someone."""
+
+        await self._send_reddit_msg(
+            ctx,
+            name=_f"{ctx.author.name} fucks {user.name}!",
+            emoji="\N{CAMERA WITH FLASH}",
+            sub=sub.FUCK,
+            details=False,
         )
