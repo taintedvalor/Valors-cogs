@@ -180,7 +180,7 @@ class RandImages(Core):
             ctx,
             name=f"{ctx.author.name} fucks {user.name}!",
             emoji="",
-            sub=sub.Fuck,
+            sub=sub.FUCK,
             details=True,
         )
 
