@@ -492,3 +492,17 @@ class RandImages(Core):
             img_arg="url",
             facts=False,
         )
+
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command(aliases=["wack"])
+    async def bonk(self, ctx, user: commands.MemberConverter):
+        """bonk someone."""
+
+        await self._send_reddit_msg(
+            ctx,
+            name=f"{ctx.author.name} bonks {user.name}!",
+            emoji="",
+            sub=sub.BONK,
+            details=False,
+        )
