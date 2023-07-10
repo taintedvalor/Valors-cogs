@@ -309,7 +309,7 @@ class RandImages(Core):
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     @commands.command(aliases=["cuddle"])
-    async def hug(self, ctx: commands.Context, user: discord.Member):
+    async def hug(self, ctx, user: commands.MemberConverter):
         """Send a random cat image some-random-api.ml API."""
 
         await self._send_other_msg(
