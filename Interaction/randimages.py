@@ -174,12 +174,12 @@ class RandImages(Core):
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     @commands.command()
-    async def fuck(self, ctx: commands.Context):
+    async def fuck(self, ctx, user: commands.MemberConverter):
         """fuck someone."""
 
         await self._send_reddit_msg(
             ctx,
-            name=_f"{ctx.author.name} fucks {user.name}!",
+            name=f"{ctx.author.name} tickles {user.name}!",
             emoji="\N{CAMERA WITH FLASH}",
             sub=sub.FUCK,
             details=False,
