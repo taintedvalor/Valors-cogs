@@ -488,7 +488,7 @@ class RandImages(Core):
             name=f"{ctx.author.name} is crying",
             emoji="",
             source="nekos.life",
-            img_url="https://nekos.life/api/crying",
+            img_url="https://nekos.best/api/v2/neko",
             img_arg="url",
             facts=False,
         )
