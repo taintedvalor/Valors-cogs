@@ -476,3 +476,19 @@ class RandImages(Core):
             sub=sub.WALLPAPERS,
             details=True,
         )
+
+    @commands.cooldown(1, 0.5, commands.BucketType.user)
+    @commands.bot_has_permissions(embed_links=True)
+    @commands.command()
+    async def cry(self, ctx: commands.Context):
+        """Send a random lizard image from nekos.life API"""
+
+        await self._send_other_msg(
+            ctx,
+            name=f"{ctx.author.name} is crying",
+            emoji="",
+            source="nekos.life",
+            img_url="https://nekos.life/api/cry",
+            img_arg="url",
+            facts=False,
+        )
