@@ -480,15 +480,15 @@ class RandImages(Core):
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     @commands.command()
-    async def cry(self, ctx: commands.Context):
+    async def poke(self, ctx: commands.Context):
         """Send a random lizard image from nekos.life API"""
 
         await self._send_other_msg(
             ctx,
-            name=f"{ctx.author.name} is crying",
+            name=f"{ctx.author.name} poked",
             emoji="",
             source="nekos.life",
-            img_url="https://nekos.best/api/v2/neko",
+            img_url="https://nekos.life/api/poke",
             img_arg="url",
             facts=False,
         )
