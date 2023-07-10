@@ -68,5 +68,6 @@ FUCK = [
     "hentaigamer",
 ]
 BONK = [
+    "perfectlycutBONK",
     "bonk",
 ]
