@@ -67,6 +67,6 @@ RULE34 = [
 FUCK = [
     "hentaigamer",
 ]
-Bonk = [
+BONK = [
     "bonk",
 ]
