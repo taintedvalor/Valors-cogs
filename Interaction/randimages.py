@@ -47,8 +47,6 @@ class RandImages(Core):
 
         )
 
-        )
-
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     @commands.command(aliases=["smooch"])
@@ -63,8 +61,6 @@ class RandImages(Core):
             img_url="https://nekos.life/api/v2/img/kiss",
             img_arg="url",
             facts=False,
-
-        )
 
         )
 
