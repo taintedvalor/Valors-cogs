@@ -39,17 +39,40 @@ class Jailer(commands.Cog):
 
         # Set permissions for jail role in jail channel
         await jail_channel.set_permissions(jail_role, read_messages=True, send_messages=True)
-        await ctx.send(f"Jail role configured as {role.name}.")
+        await self.update_channel_permissions(guild, jail_role, jail_channel)
 
         # Remove all roles from users with the jail role
         for member in guild.members:
             if jail_role in member.roles:
                 await member.remove_roles(jail_role)
 
+        await ctx.send(f"Jail role configured as {role.name}.")
+
     @jailer.command(name="configjailchannel")
     async def config_jail_channel(self, ctx, channel: discord.TextChannel):
         """Configures the jail channel."""
-        await self.config.guild(ctx.guild).jail_channel.set(channel.id)
+        guild = ctx.guild
+        jail_channel_id = channel.id
+        jail_role_id = await self.config.guild(guild).jail_role()
+
+        if not jail_role_id:
+            await ctx.send("Jail role is not configured for this guild.")
+            return
+
+        jail_role = guild.get_role(jail_role_id)
+        jail_channel = guild.get_channel(jail_channel_id)
+
+        if not jail_role:
+            await ctx.send("Jail role not found.")
+            return
+
+        if not jail_channel:
+            await ctx.send("Jail channel not found.")
+            return
+
+        # Set permissions for jail role in jail channel
+        await jail_channel.set_permissions(jail_role, read_messages=True, send_messages=True)
+        await self.update_channel_permissions(guild, jail_role, jail_channel)
         await ctx.send(f"Jail channel configured as {channel.mention}.")
 
     @jailer.command(name="settings")
@@ -105,6 +128,7 @@ class Jailer(commands.Cog):
         self.original_roles[member.id] = member.roles[1:]  # Exclude @everyone role
         await member.remove_roles(*self.original_roles[member.id])
         await member.add_roles(jail_role)
+        await self.update_channel_permissions(ctx.guild, jail_role, jail_channel)
         await ctx.send(f"{member.display_name} has been jailed.")
         await jail_channel.send(f"{member.display_name} has been jailed.")
 
@@ -137,10 +161,17 @@ class Jailer(commands.Cog):
             await member.remove_roles(jail_role)
             await member.add_roles(*self.original_roles[member.id], atomic=True)
             del self.original_roles[member.id]
+            await self.update_channel_permissions(ctx.guild, jail_role, jail_channel)
             await ctx.send(f"{member.display_name} has been unjailed.")
             await jail_channel.send(f"{member.display_name} has been unjailed.")
         else:
             await ctx.send(f"{member.display_name} is not currently jailed.")
+
+    async def update_channel_permissions(self, guild, jail_role, jail_channel):
+        """Updates the channel permissions for a jail role."""
+        for channel in guild.channels:
+            if channel != jail_channel:
+                await channel.set_permissions(jail_role, read_messages=False, send_messages=False)
 
 
 def setup(bot):
