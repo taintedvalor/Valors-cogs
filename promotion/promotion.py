@@ -1,12 +1,24 @@
 import discord
-from redbot.core import commands
+from redbot.core import commands, Config
 
 class Promotion(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.guild_settings = {}  # Dictionary to store guild settings
+        self.config = Config.get_conf(self, identifier=1234567890)
+        default_guild_settings = {
+            "promotion_channel": None,
+            "staff_roles": []
+        }
+        self.config.register_guild(**default_guild_settings)
         self.numbers = [':zero:', ':one:', ':two:', ':three:',
                         ':four:', ':five:', ':six:', ':seven:', ':eight:', ':nine:']
+
+    @commands.Cog.listener()
+    async def cog_after_invoke(self, ctx):
+        await self.config.guild(ctx.guild).set(self.guild_settings)
+
+    async def guild_settings(self, guild):
+        return await self.config.guild(guild).all()
 
     @commands.group()
     @commands.admin()
@@ -22,16 +34,13 @@ class Promotion(commands.Cog):
 
         Usage: !promotion setchannel [channel]
         """
-        guild_id = ctx.guild.id
-
-        if guild_id not in self.guild_settings:
-            self.guild_settings[guild_id] = {}
+        settings = await self.guild_settings(ctx.guild)
 
         if channel is None:
-            self.guild_settings[guild_id]["promotion_channel"] = None
+            settings["promotion_channel"] = None
             await ctx.send("The promotion notification channel has been unset.")
         else:
-            self.guild_settings[guild_id]["promotion_channel"] = channel.id
+            settings["promotion_channel"] = channel.id
             await ctx.send(f"The promotion notification channel has been set to {channel.mention}.")
 
     @promotion.command(name="addrole")
@@ -42,21 +51,16 @@ class Promotion(commands.Cog):
 
         Usage: !promotion addrole [role] [rank]
         """
-        guild_id = ctx.guild.id
+        settings = await self.guild_settings(ctx.guild)
+        staff_roles = settings["staff_roles"]
 
-        if guild_id not in self.guild_settings:
-            self.guild_settings[guild_id] = {}
-
-        staff_roles = self.guild_settings[guild_id].get("staff_roles", [])
-        existing_roles = [r["role"] for r in staff_roles]
-
-        if role in existing_roles:
+        if any(staff_role["role"].id == role.id for staff_role in staff_roles):
             await ctx.send(f"The {role.name} role is already added as a staff role.")
             return
 
         staff_roles.append({"role": role, "rank": rank})
-        self.guild_settings[guild_id]["staff_roles"] = staff_roles
-
+        staff_roles.sort(key=lambda r: r["rank"])
+        settings["staff_roles"] = staff_roles
         await ctx.send(f"The {role.name} role has been added as a staff role with rank {rank}.")
 
     @promotion.command(name="removerole")
@@ -67,69 +71,94 @@ class Promotion(commands.Cog):
 
         Usage: !promotion removerole [role]
         """
-        guild_id = ctx.guild.id
+        settings = await self.guild_settings(ctx.guild)
+        staff_roles = settings["staff_roles"]
 
-        if guild_id in self.guild_settings and "staff_roles" in self.guild_settings[guild_id]:
-            staff_roles = self.guild_settings[guild_id]["staff_roles"]
-            staff_roles = [r for r in staff_roles if r["role"] != role]
-            self.guild_settings[guild_id]["staff_roles"] = staff_roles
+        if any(staff_role["role"].id == role.id for staff_role in staff_roles):
+            staff_roles = [staff_role for staff_role in staff_roles if staff_role["role"].id != role.id]
+            settings["staff_roles"] = staff_roles
             await ctx.send(f"The {role.name} role has been removed from the staff roles.")
         else:
             await ctx.send(f"The {role.name} role is not currently a staff role.")
 
     @promotion.command()
     @commands.admin()
-    async def promote(self, ctx, user: discord.Member, role: discord.Role = None):
+    async def promote(self, ctx, user: discord.Member, rank: int = None):
         """
-        Promotes a user to a specified role.
+        Promotes a user to a specified role based on rank number.
 
-        Usage: !promotion promote [user] [role]
+        Usage: !promotion promote [user] [rank]
         """
-        guild_id = ctx.guild.id
+        settings = await self.guild_settings(ctx.guild)
+        staff_roles = settings["staff_roles"]
 
-        if guild_id in self.guild_settings and "staff_roles" in self.guild_settings[guild_id]:
-            staff_roles = self.guild_settings[guild_id]["staff_roles"]
-            if not staff_roles:
-                await ctx.send("No staff roles have been configured for this guild.")
-                return
-
-            current_roles = [r["role"] for r in staff_roles if r["role"] in user.roles]
-
-            if not role:
-                if current_roles:
-                    current_rank = max(r["rank"] for r in staff_roles if r["role"] in current_roles)
-                    next_rank_roles = [r for r in staff_roles if r["rank"] > current_rank]
-                    if next_rank_roles:
-                        role = min(next_rank_roles, key=lambda r: r["rank"])
-                    else:
-                        role = min(staff_roles, key=lambda r: r["rank"])
-                else:
-                    role = min(staff_roles, key=lambda r: r["rank"])
-
-            if role in [r["role"] for r in staff_roles]:
-                if role in current_roles:
-                    await ctx.send(f"{user.name} already has the {role.name} role.")
-                else:
-                    await user.add_roles(role)
-                    promotion_channel_id = self.guild_settings.get(ctx.guild.id, {}).get("promotion_channel")
-
-                    if promotion_channel_id:
-                        promotion_channel = self.bot.get_channel(promotion_channel_id)
-                        if promotion_channel:
-                            blocks = ""
-                            for c in role.name:
-                                if c.isalpha():
-                                    blocks += ":regional_indicator_{}: ".format(c).lower()
-                                elif c.isdigit():
-                                    blocks += self.numbers[int(c)]
-                                else:
-                                    blocks += " "
-                            await promotion_channel.send(f"Congratulations to {user.mention} for being promoted to {blocks}!")
-                    await ctx.send(f"{user.name} has been promoted to the {role.name} role.")
-            else:
-                await ctx.send(f"{role.name} is not a staff role.")
-        else:
+        if not staff_roles:
             await ctx.send("No staff roles have been configured for this guild.")
+            return
+
+        current_roles = [staff_role["role"] for staff_role in staff_roles if staff_role["role"] in user.roles]
+
+        if rank is None:
+            if current_roles:
+                current_rank = max(staff_roles.index(staff_role) for staff_role in staff_roles if staff_role["role"] in current_roles)
+                if current_rank + 1 < len(staff_roles):
+                    role = staff_roles[current_rank + 1]["role"]
+                else:
+                    role = staff_roles[current_rank]["role"]
+            else:
+                role = staff_roles[0]["role"]
+        else:
+            if rank < 1 or rank > len(staff_roles):
+                await ctx.send("Invalid rank number.")
+                return
+            else:
+                role = staff_roles[rank - 1]["role"]
+
+        if role in [staff_role["role"] for staff_role in staff_roles]:
+            if role in current_roles:
+                await ctx.send(f"{user.name} already has the {role.name} role.")
+            else:
+                await user.add_roles(role)
+                promotion_channel_id = settings["promotion_channel"]
+
+                if promotion_channel_id:
+                    promotion_channel = ctx.guild.get_channel(promotion_channel_id)
+                    if promotion_channel:
+                        blocks = ""
+                        for c in role.name:
+                            if c.isalpha():
+                                blocks += ":regional_indicator_{}: ".format(c).lower()
+                            elif c.isdigit():
+                                blocks += self.numbers[int(c)]
+                            else:
+                                blocks += " "
+                        await promotion_channel.send(f"Congratulations to {user.mention} for being promoted to {blocks}!")
+                await ctx.send(f"{user.name} has been promoted to the {role.name} role.")
+        else:
+            await ctx.send(f"{role.name} is not a staff role.")
+
+    @promotion.command()
+    @commands.admin()
+    async def demote(self, ctx, user: discord.Member):
+        """
+        Demotes a user by removing all staff roles.
+
+        Usage: !promotion demote [user]
+        """
+        settings = await self.guild_settings(ctx.guild)
+        staff_roles = settings["staff_roles"]
+
+        if not staff_roles:
+            await ctx.send("No staff roles have been configured for this guild.")
+            return
+
+        current_roles = [staff_role["role"] for staff_role in staff_roles if staff_role["role"] in user.roles]
+
+        if current_roles:
+            await user.remove_roles(*current_roles)
+            await ctx.send(f"All staff roles have been removed from {user.name}.")
+        else:
+            await ctx.send(f"{user.name} does not have any staff roles.")
 
     @promotion.command(name="list")
     @commands.admin()
@@ -139,29 +168,22 @@ class Promotion(commands.Cog):
 
         Usage: !promotion list
         """
-        guild_id = ctx.guild.id
-        settings = self.guild_settings.get(guild_id)
+        settings = await self.guild_settings(ctx.guild)
+        promotion_channel_id = settings["promotion_channel"]
+        staff_roles = settings["staff_roles"]
 
-        if settings:
-            channel_id = settings.get("promotion_channel")
-            staff_roles = settings.get("staff_roles", [])
-
-            response = f"Promotion Settings:\n"
-            response += f"Promotion Channel: {ctx.guild.get_channel(channel_id).mention}\n" if channel_id else "Promotion Channel: None\n"
-            response += "Staff Roles:\n"
-            if staff_roles:
-                for staff_role in staff_roles:
-                    role = staff_role["role"]
-                    rank = staff_role["rank"]
-                    response += f"- {role.name} (Rank: {rank})\n"
-            else:
-                response += "No staff roles have been added.\n"
-
-            await ctx.send(response)
+        response = f"Promotion Settings:\n"
+        response += f"Promotion Channel: {ctx.guild.get_channel(promotion_channel_id).mention}\n" if promotion_channel_id else "Promotion Channel: None\n"
+        response += "Staff Roles:\n"
+        if staff_roles:
+            for index, staff_role in enumerate(staff_roles, start=1):
+                role = staff_role["role"]
+                rank = staff_role["rank"]
+                response += f"{index}. {role.name} (Rank: {rank})\n"
         else:
-            await ctx.send("No promotion settings have been configured for this guild.")
+            response += "No staff roles have been added.\n"
 
-    # Rest of the code remains the same
+        await ctx.send(response)
 
 def setup(bot):
     bot.add_cog(Promotion(bot))
