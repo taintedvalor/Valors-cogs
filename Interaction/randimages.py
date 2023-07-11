@@ -1,4 +1,3 @@
-import discord
 from redbot.core import checks, commands
 from redbot.core.i18n import Translator, cog_i18n
 
