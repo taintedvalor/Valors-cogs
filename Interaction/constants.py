@@ -1,7 +1,3 @@
-
-from typing import Final, Dict
-
-
 REDDIT_BASEURL = "https://api.reddit.com/r/{}/random"
 IMGUR_LINKS = "http://imgur.com", "https://m.imgur.com", "https://imgur.com"
 GOOD_EXTENSIONS = ".png", ".jpg", ".jpeg", ".gif"
@@ -68,6 +64,7 @@ RULE34 = [
     "CartoonRule34",
     "Rimuru_hentai",
 ]
-
-
-
+FUCK = [
+    "Hentigif",
+    "Roughsex",
+]
