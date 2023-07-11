@@ -95,10 +95,10 @@ class Promotion(commands.Cog):
 
             current_roles = [r["role"] for r in staff_roles if r["role"] in user.roles]
 
-            if role is None:
+            if not role:
                 if current_roles:
-                    current_highest_rank = max(current_roles, key=lambda r: next((x["rank"] for x in staff_roles if x["role"] == r), 0))
-                    next_rank_roles = [r for r in staff_roles if next((x["rank"] for x in staff_roles if x["role"] == r), 0) > next((x["rank"] for x in staff_roles if x["role"] == current_highest_rank), 0)]
+                    current_rank = max(r["rank"] for r in staff_roles if r["role"] in current_roles)
+                    next_rank_roles = [r for r in staff_roles if r["rank"] > current_rank]
                     if next_rank_roles:
                         role = min(next_rank_roles, key=lambda r: r["rank"])
                     else:
