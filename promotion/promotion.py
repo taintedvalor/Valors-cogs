@@ -14,7 +14,7 @@ class Promotion(commands.Cog):
                         ':four:', ':five:', ':six:', ':seven:', ':eight:', ':nine:']
 
     @commands.Cog.listener()
-    async def cog_after_invoke(self, ctx):
+    async def after_invoke(self, ctx):
         await self.config.guild(ctx.guild).set(self.guild_settings)
 
     async def guild_settings(self, guild):
