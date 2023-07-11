@@ -1,5 +1,5 @@
 import discord
-from redbot.core import commands, Config, utils, checks, bot
+from redbot.core import commands
 
 class Promotion(commands.Cog):
     def __init__(self, bot):
