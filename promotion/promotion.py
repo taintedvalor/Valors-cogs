@@ -79,11 +79,11 @@ class Promotion(commands.Cog):
 
     @promotion.command()
     @commands.admin()
-    async def promote(self, ctx, user: discord.Member, role: discord.Role = None, rank: int = None):
+    async def promote(self, ctx, user: discord.Member, role: discord.Role = None):
         """
-        Promotes a user to a specified role.
+        Promotes a user to the next rank unless a specific role is provided.
 
-        Usage: !promotion promote [user] [role] [rank]
+        Usage: !promotion promote [user] [role]
         """
         guild_id = ctx.guild.id
 
@@ -96,23 +96,15 @@ class Promotion(commands.Cog):
             current_roles = [r["role"] for r in staff_roles if r["role"] in user.roles]
 
             if role is None:
-                if rank is None:
-                    if current_roles:
-                        current_highest_rank = max(current_roles, key=lambda r: next((x["rank"] for x in staff_roles if x["role"] == r), 0))
-                        next_rank_roles = [r for r in staff_roles if next((x["rank"] for x in staff_roles if x["role"] == r), 0) > next((x["rank"] for x in staff_roles if x["role"] == current_highest_rank), 0)]
-                        if next_rank_roles:
-                            role = min(next_rank_roles, key=lambda r: r["rank"])
-                        else:
-                            role = min(staff_roles, key=lambda r: r["rank"])
+                if current_roles:
+                    current_highest_rank = max(current_roles, key=lambda r: next((x["rank"] for x in staff_roles if x["role"] == r), 0))
+                    next_rank_roles = [r for r in staff_roles if next((x["rank"] for x in staff_roles if x["role"] == r), 0) > next((x["rank"] for x in staff_roles if x["role"] == current_highest_rank), 0)]
+                    if next_rank_roles:
+                        role = min(next_rank_roles, key=lambda r: r["rank"])
                     else:
                         role = min(staff_roles, key=lambda r: r["rank"])
                 else:
-                    matching_roles = [r for r in staff_roles if r["rank"] == rank]
-                    if matching_roles:
-                        role = min(matching_roles, key=lambda r: r["rank"])
-                    else:
-                        await ctx.send(f"No staff role with rank {rank} found.")
-                        return
+                    role = min(staff_roles, key=lambda r: r["rank"])
 
             if role in [r["role"] for r in staff_roles]:
                 if role in current_roles:
