@@ -76,7 +76,7 @@ class Promotion(commands.Cog):
             await ctx.send(f"No staff roles have been configured for this guild.")
 
     @promotion.command()
-    @commands.admin()
+    @commands.admin(aliases=["promote"])
     async def promote(self, ctx, user: discord.Member, role: discord.Role):
         """
         Promotes a user to a specified role.
