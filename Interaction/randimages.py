@@ -393,6 +393,6 @@ class RandImages(Core):
             ctx,
             name=_("heres some food porn"),
             emoji="",
-            sub=sub.RULE34,
+            sub=sub.FOOD,
             details=False,
         )
