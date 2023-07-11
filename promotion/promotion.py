@@ -13,10 +13,6 @@ class Promotion(commands.Cog):
         self.numbers = [':zero:', ':one:', ':two:', ':three:',
                         ':four:', ':five:', ':six:', ':seven:', ':eight:', ':nine:']
 
-    @commands.Cog.listener()
-    async def after_invoke(self, ctx):
-        await self.config.guild(ctx.guild).set(self.guild_settings)
-
     async def guild_settings(self, guild):
         return await self.config.guild(guild).all()
 
