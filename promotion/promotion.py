@@ -55,7 +55,70 @@ class Promotion(commands.Cog):
         else:
             await ctx.send(f"The {role.name} role is already added as a staff role.")
 
-    # Rest of the code remains the same
+    @promotion.command(name="removerole")
+    @commands.admin()
+    async def remove_staff_role(self, ctx, role: discord.Role):
+        """
+        Removes a staff role from promotions.
+
+        Usage: !promotion removerole [role]
+        """
+        guild_id = ctx.guild.id
+
+        if guild_id in self.guild_settings and "staff_roles" in self.guild_settings[guild_id]:
+            staff_roles = self.guild_settings[guild_id]["staff_roles"]
+            if role.id in staff_roles:
+                staff_roles.remove(role.id)
+                await ctx.send(f"The {role.name} role has been removed from the staff roles.")
+            else:
+                await ctx.send(f"The {role.name} role is not currently a staff role.")
+        else:
+            await ctx.send(f"No staff roles have been configured for this guild.")
+
+    @promotion.command()
+    @commands.admin()
+    async def promote(self, ctx, user: discord.Member, role: discord.Role):
+        """
+        Promotes a user to a specified role.
+
+        Usage: !promotion promote [user] [role]
+        """
+        await user.add_roles(role)
+        promotion_channel_id = self.guild_settings.get(ctx.guild.id)
+
+        if promotion_channel_id:
+            promotion_channel = self.bot.get_channel(promotion_channel_id)
+            if promotion_channel:
+                blocks = ""
+                for c in role.name:
+                    if c.isalpha():
+                        blocks += ":regional_indicator_{}: ".format(c).lower()
+                    elif c.isdigit():
+                        blocks += self.numbers[int(c)]
+                    else:
+                        blocks += " "
+                await promotion_channel.send(f"Congratulations to {user.mention} for being promoted to {blocks}!")
+
+    @promotion.command()
+    @commands.admin()
+    async def demote(self, ctx, user: discord.Member):
+        """
+        Demotes a user by removing all staff roles.
+
+        Usage: !promotion demote [user]
+        """
+        guild_id = ctx.guild.id
+
+        if guild_id in self.guild_settings and "staff_roles" in self.guild_settings[guild_id]:
+            staff_roles = self.guild_settings[guild_id]["staff_roles"]
+            roles_to_remove = [role for role in user.roles if role.id in staff_roles]
+            if roles_to_remove:
+                await user.remove_roles(*roles_to_remove)
+                await ctx.send(f"All staff roles have been removed from {user.name}.")
+            else:
+                await ctx.send(f"{user.name} does not have any staff roles.")
+        else:
+            await ctx.send(f"No staff roles have been configured for this guild.")
 
     @promotion.command(name="list")
     @commands.admin()
