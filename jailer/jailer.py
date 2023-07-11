@@ -18,8 +18,33 @@ class Jailer(commands.Cog):
     @jailer.command(name="configjailrole")
     async def config_jail_role(self, ctx, role: discord.Role):
         """Configures the jail role."""
-        await self.config.guild(ctx.guild).jail_role.set(role.id)
+        guild = ctx.guild
+        jail_role_id = role.id
+        jail_channel_id = await self.config.guild(guild).jail_channel()
+
+        if not jail_channel_id:
+            await ctx.send("Jail channel is not configured for this guild.")
+            return
+
+        jail_role = guild.get_role(jail_role_id)
+        jail_channel = guild.get_channel(jail_channel_id)
+
+        if not jail_role:
+            await ctx.send("Jail role not found.")
+            return
+
+        if not jail_channel:
+            await ctx.send("Jail channel not found.")
+            return
+
+        # Set permissions for jail role in jail channel
+        await jail_channel.set_permissions(jail_role, read_messages=True, send_messages=True)
         await ctx.send(f"Jail role configured as {role.name}.")
+
+        # Remove all roles from users with the jail role
+        for member in guild.members:
+            if jail_role in member.roles:
+                await member.remove_roles(jail_role)
 
     @jailer.command(name="configjailchannel")
     async def config_jail_channel(self, ctx, channel: discord.TextChannel):
@@ -120,4 +145,3 @@ class Jailer(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Jailer(bot))
-
