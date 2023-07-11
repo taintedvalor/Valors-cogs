@@ -372,7 +372,7 @@ class RandImages(Core):
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     @commands.command(aliases=["r34"])
-    async def ass(self, ctx: commands.Context):
+    async def rule34(self, ctx: commands.Context):
         """RULE34."""
 
         await self._send_reddit_msg(
@@ -393,6 +393,6 @@ class RandImages(Core):
             ctx,
             name=_("heres some food porn"),
             emoji="",
-            sub=sub.FOOD,
+            sub=sub.Food,
             details=False,
         )
