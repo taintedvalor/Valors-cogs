@@ -6,6 +6,10 @@ __red_end_user_data_statement__ = (
 )
 
 
-async def setup(bot: Red):
+async def setup(bot: Red) -> None:
     cog = RandImages(bot)
-    await bot.add_cog(cog)
+
+    if asyncio.iscoroutinefunction(bot.add_cog):
+        await bot.add_cog(cog)
+    else:
+        bot.add_cog(cog)
