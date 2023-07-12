@@ -49,6 +49,20 @@ class VentCog(commands.Cog):
 
         await ctx.send("Your message has been sent.")
 
+    @venter.command()
+    @commands.guild_only()
+    async def config(self, ctx):
+        """Show the current venting channel configuration."""
+        venting_channel_id = await self.config.guild(ctx.guild).venting_channel()
+        if not venting_channel_id:
+            return await ctx.send("Venting channel is not set for this guild.")
+
+        venting_channel = ctx.guild.get_channel(venting_channel_id)
+        if not venting_channel:
+            return await ctx.send("Venting channel not found in this guild.")
+
+        await ctx.send(f"Venting channel is set to {venting_channel.mention}.")
+
     async def get_venting_channel(self, guild: str) -> int:
         guild_id = None
         try:
