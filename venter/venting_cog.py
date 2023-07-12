@@ -33,7 +33,7 @@ class VentCog(commands.Cog):
         if ctx.guild:
             await self.send_to_venting_channel(ctx, message)
         else:
-            await self.prompt_guild_and_send(ctx, message)
+            await self.send_to_guild(ctx, message)
 
     async def send_to_venting_channel(self, ctx, message: str):
         guild_id = ctx.guild.id
@@ -54,7 +54,7 @@ class VentCog(commands.Cog):
         await target_channel.send(content=vent_message, files=files)
         await ctx.send("Your message has been sent.")
 
-    async def prompt_guild_and_send(self, ctx, message: str):
+    async def send_to_guild(self, ctx, message: str):
         def check(m):
             return m.author == ctx.author and isinstance(m.channel, discord.DMChannel)
 
