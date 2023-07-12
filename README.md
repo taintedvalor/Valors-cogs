@@ -13,14 +13,13 @@ Here is a list of available cogs and their respective descriptions:
 | --- | --- | --- |
 | [Venter](#venter) | vent anonymously | ✅ |
 | [Tod](#truthOrDare) | Play Truth or Dare | ✅ |
-| [Redirect](#Redirect) | Redirect messages | ✅ |
 | [PictureOnly](#PictureOnly) | Picture-only channel | ✅ |
 | [InfiniteSentence](#InfiniteSentence) | Generate infinite sentences | ✅ |
-| [promotion](#promotion) | Server promotion functionalities | ❌ |
+| [promotion](#promotion) | promotion functionalities | ❌ |
 | [Interaction](#interaction) | Interactive features | ✅ |
 | [cmdredirect](#cmdredirect) | Command redirection | ✅ |
 | [jailer](#jailer) | User jailing | ✅ |
-| [offend](#offend) | Offensive content handling | ✅ |
+| [offend](#offend) | Constantly apply a emoji | ✅ |
 | [roleplaycog](#roleplaycog) | Roleplaying features | ✅ |
 | [bounty](#bounty) | *No specific short name provided* | ❌ (Not ready) |
 
@@ -85,14 +84,14 @@ The jailer cog provides moderation features related to jailing users within a Di
 - Short: `offend`
 - Ready: ✅
 
-The offend cog provides functionalities related to offensive content handling, allowing for better moderation and content filtering in your Discord server.
+The offend cog allows you to Constantly apply a configurable emoji to someone's messages sent within the guild. 
 
 ### roleplaycog
 
 - Short: `roleplaycog`
 - Ready: ✅
 
-The roleplaycog allows you to Constantly apply a configurable emoji to someone's messages sent within the guild. 
+The roleplaycog provides features and commands related to roleplaying activities within a Discord server, allowing users to engage in immersive roleplay experiences.
 
 ### bounty
 
