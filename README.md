@@ -23,6 +23,13 @@ Here is a list of available cogs and their respective descriptions:
 | [roleplaycog](#roleplaycog) | Roleplaying features | ✅ |
 | [bounty](#bounty) | *No specific short name provided* | ❌ (Not ready) |
 
+
+### install
+
+`[p]repo add Valors-cogs https://github.com/taintedvalor/Valors-cogs`
+
+`[p]cog install Valors-cogs [cogname}`
+
 ### Venter
 
 - Short: `Venter`
