@@ -4,7 +4,7 @@ a bunch of fucking cogs!
 Welcome, This repository contains a collection of o most random cogs for use with the Discord RedBot framework.
 Please note that some of the cogs might still be in development and may require further refinement.
 
-If you have any questions or need support, feel free to join [join my discord!](https://discord.gg/QysVtMvgSN).
+If you have any questions or need support, feel free to [join my discord!](https://discord.gg/QysVtMvgSN).
 
 ## Cogs
 
