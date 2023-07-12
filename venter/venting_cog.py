@@ -19,7 +19,7 @@ class VentCog(commands.Cog):
     @venter.command()
     @commands.guild_only()
     @commands.has_permissions(administrator=True)
-    async def set_venting_channel(self, ctx, channel: discord.TextChannel):
+    async def setchannel(self, ctx, channel: discord.TextChannel):
         """Set the venting channel for anonymous messages."""
         guild_id = ctx.guild.id
         self.venting_channels[guild_id] = channel.id
