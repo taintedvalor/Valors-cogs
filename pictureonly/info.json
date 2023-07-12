@@ -1,0 +1,14 @@
+{
+    "author": ["valor (Valor_bound)"],
+    "name": "PictureOnly",
+    "install_msg": "Thank you for installing this PictureOnly!\nDo `[p]help` to get the list of commands and their description.",
+    "short": "Set A picture-only channel for A guild!",
+    "description": "Set A picture-only channel for A guild!",
+    "tags": [
+        "Picture",
+        "Command",
+        "Only"
+    ],
+    "min_bot_version": "3.5.0",
+    "end_user_data_statement": "This cog does not persistently store data or metadata about users."
+}
