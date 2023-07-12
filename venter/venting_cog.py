@@ -12,8 +12,7 @@ class VentCog(commands.Cog):
         self.bot = bot_instance
         self.venting_channels = {}
 
-    @commands.group()
-    @commands.guild_only()
+    @commands.group(invoke_without_command=True)
     async def venter(self, ctx):
         """Commands for anonymous venting."""
         pass
@@ -27,8 +26,8 @@ class VentCog(commands.Cog):
         self.venting_channels[guild_id] = channel.id
         await ctx.send(f"Venting channel set to {channel.mention}.")
 
-    @venter.command(pass_context=True, rest_is_raw=True, aliases=["vent"])
-    async def send(self, ctx, *, message: str = None):
+    @venter.command(name="vent", rest_is_raw=True)
+    async def venter_vent(self, ctx, *, message: str = None):
         """Vent Anonymously from Dms to the configured venting channel or a specified guild."""
         if ctx.guild:
             await self.send_to_venting_channel(ctx, message)
