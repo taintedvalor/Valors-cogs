@@ -11,7 +11,8 @@ class ElectionCog(commands.Cog):
         self.role_to_inherit_id = None
         self.previous_winner = None
         self.election_period = 86400
-        self.participants = []
+        self.participants = {}
+        self.participant_votes = {}
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -54,40 +55,44 @@ class ElectionCog(commands.Cog):
         await election_channel.purge()
 
         embed = discord.Embed(title="Election", description="React to the corresponding emoji to vote for a participant.")
-        user_list = [ctx.author]
         message = await election_channel.send(embed=embed)
 
-        # Assign unique emoji to each participant
-        for participant in self.participants:
-            emoji = self.participant_emojis.get(participant.id, "❓")
+        # Assign unique emoji to each participant and add reactions
+        for participant, emoji in self.participant_emojis.items():
+            self.participant_votes[emoji] = []
             await message.add_reaction(emoji)
 
         await self.bot.wait_for('message', check=lambda m: m.channel == election_channel and m.author == ctx.author)
-        await self.process_election_results(message, user_list)
+        await self.process_election_results(message)
 
-    async def process_election_results(self, message, user_list):
+    async def process_election_results(self, message):
         await message.clear_reactions()
+        self.participant_votes = {emoji: [] for emoji in self.participant_emojis.values()}
 
         for reaction in message.reactions:
-            async for user in reaction.users():
-                if user != self.bot.user and user.id in self.participant_emojis:
-                    participant = discord.utils.get(user_list, id=user.id)
-                    if participant:
-                        user_emoji = self.participant_emojis[user.id]
-                        if reaction.emoji == user_emoji:
-                            user_list.remove(participant)
-                        else:
-                            user_list.append(user)
+            if reaction.emoji in self.participant_emojis:
+                async for user in reaction.users():
+                    if user != self.bot.user and user.id in self.participant_emojis:
+                        emoji = self.participant_emojis[user.id]
+                        self.participant_votes[emoji].append(user)
 
         embed = discord.Embed(title="Election Results", description="Here are the election results:")
-        for user in user_list:
-            emoji = self.participant_emojis.get(user.id, "❓")
-            embed.add_field(name=user.name, value=f"{user.mention} {emoji}", inline=False)
+        for participant, emoji in self.participant_emojis.items():
+            votes = self.participant_votes.get(emoji, [])
+            embed.add_field(name=participant.name, value=f"{participant.mention} {emoji} - Votes: {len(votes)}", inline=False)
 
-        winners = [user for user in user_list if user_list.count(user) == max(user_list.count(u) for u in user_list)]
+        winners = []
+        max_votes = 0
+        for emoji, votes in self.participant_votes.items():
+            if len(votes) > max_votes:
+                winners = [participant for participant, e in self.participant_emojis.items() if e == emoji]
+                max_votes = len(votes)
+            elif len(votes) == max_votes:
+                winners.extend([participant for participant, e in self.participant_emojis.items() if e == emoji])
+
         if winners:
             winner = random.choice(winners)
-            embed.set_footer(text=f"The winner is {winner.name} with {user_list.count(winner)} votes!")
+            embed.set_footer(text=f"The winner is {winner.name} with {max_votes} votes!")
         else:
             winner = None
 
@@ -134,8 +139,8 @@ class ElectionCog(commands.Cog):
             return
 
         if ctx.author not in self.participants:
-            self.participants.append(ctx.author)
-            self.participant_emojis[ctx.author.id] = emoji
+            self.participants[ctx.author] = emoji
+            self.participant_emojis[ctx.author] = emoji
             await ctx.send(f"{ctx.author.mention} has joined the election with the emoji {emoji}.")
             await self.update_election_embed()
         else:
@@ -143,15 +148,16 @@ class ElectionCog(commands.Cog):
 
     async def update_election_embed(self):
         election_channel = self.bot.get_channel(self.election_channel_id)
-        message = await election_channel.history().find(lambda m: m.author == self.bot.user)
-        if message:
-            embed = message.embeds[0]
-            embed.clear_fields()
-            embed.description = "React to the corresponding emoji to vote for a participant."
-            for user in self.participants:
-                emoji = self.participant_emojis.get(user.id, "❓")
-                embed.add_field(name=user.name, value=f"{user.mention} {emoji}", inline=False)
-            await message.edit(embed=embed)
+        async for message in election_channel.history():
+            if message.author == self.bot.user:
+                embed = message.embeds[0]
+                embed.clear_fields()
+                embed.description = "React to the corresponding emoji to vote for a participant."
+                for participant, emoji in self.participant_emojis.items():
+                    votes = self.participant_votes.get(emoji, [])
+                    embed.add_field(name=participant.name, value=f"{participant.mention} {emoji} - Votes: {len(votes)}", inline=False)
+                await message.edit(embed=embed)
+                break
 
     @election.command(name="settings")
     async def settings_command(self, ctx):
