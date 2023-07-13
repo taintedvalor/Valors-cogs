@@ -11,7 +11,8 @@ class PinterestCog(commands.Cog):
         self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier
         default_guild = {
             "channel": None,
-            "query": None
+            "query": None,
+            "loop_started": False
         }
         self.config.register_guild(**default_guild)
         self.pinterest_loop.start()
@@ -53,18 +54,32 @@ class PinterestCog(commands.Cog):
         pass
 
     @pinterest.command()
-    async def start(self, ctx, query: str):
-        """Start sending images from Pinterest with the specified query."""
+    async def query(self, ctx, query: str):
+        """Set the query for Pinterest image search."""
         await self.config.guild(ctx.guild).query.set(query)
-        self.pinterest_loop.start()
-        await ctx.send(f"Pinterest image loop started with query: {query}")
+        await ctx.send(f"The query for Pinterest image search has been set to: {query}")
+
+    @pinterest.command()
+    async def start(self, ctx):
+        """Start sending images from Pinterest."""
+        loop_started = await self.config.guild(ctx.guild).loop_started()
+        if loop_started:
+            await ctx.send("The Pinterest image loop is already running.")
+        else:
+            await self.config.guild(ctx.guild).loop_started.set(True)
+            self.pinterest_loop.start()
+            await ctx.send("Pinterest image loop started.")
 
     @pinterest.command()
     async def stop(self, ctx):
         """Stop sending images from Pinterest."""
-        await self.config.guild(ctx.guild).query.set(None)
-        self.pinterest_loop.stop()
-        await ctx.send("Pinterest image loop stopped.")
+        loop_started = await self.config.guild(ctx.guild).loop_started()
+        if loop_started:
+            await self.config.guild(ctx.guild).loop_started.set(False)
+            self.pinterest_loop.stop()
+            await ctx.send("Pinterest image loop stopped.")
+        else:
+            await ctx.send("The Pinterest image loop is not currently running.")
 
     @commands.is_owner()
     @pinterest.command(name="channel")
@@ -76,7 +91,6 @@ class PinterestCog(commands.Cog):
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         await self.config.clear_all()
-
 
 def setup(bot):
     bot.add_cog(PinterestCog(bot))
