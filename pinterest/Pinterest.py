@@ -21,28 +21,31 @@ class PinterestCog(commands.Cog):
 
     @tasks.loop(seconds=15.0)
     async def pinterest_loop(self):
-        async with self.config.guild(self.bot.get_guild().id).all() as guild_config:
-            query = guild_config["query"]
-            channel_id = guild_config["channel"]
-            channel = self.bot.get_channel(channel_id)
-            
-            if query and channel:
-                url = f"https://www.pinterest.com/search/pins/?q={query}"
-                response = requests.get(url)
-                soup = BeautifulSoup(response.text, "html.parser")
-                images = soup.find_all("img")
-                
-                for image in images:
-                    if image.has_attr("src"):
-                        image_url = image["src"]
-                        if image_url.startswith("https://i.pinimg.com"):
-                            embed = discord.Embed()
-                            if image_url.endswith((".gif", ".gifv")):
-                                embed.set_image(url=image_url)
-                            else:
-                                embed.set_thumbnail(url=image_url)
-                            await channel.send(embed=embed)
-                            break
+        for guild_id in await self.config.all_guilds():
+            guild = self.bot.get_guild(guild_id)
+            if guild:
+                async with self.config.guild(guild).all() as guild_config:
+                    query = guild_config["query"]
+                    channel_id = guild_config["channel"]
+                    channel = guild.get_channel(channel_id)
+                    
+                    if query and channel:
+                        url = f"https://www.pinterest.com/search/pins/?q={query}"
+                        response = requests.get(url)
+                        soup = BeautifulSoup(response.text, "html.parser")
+                        images = soup.find_all("img")
+                        
+                        for image in images:
+                            if image.has_attr("src"):
+                                image_url = image["src"]
+                                if image_url.startswith("https://i.pinimg.com"):
+                                    embed = discord.Embed()
+                                    if image_url.endswith((".gif", ".gifv")):
+                                        embed.set_image(url=image_url)
+                                    else:
+                                        embed.set_thumbnail(url=image_url)
+                                    await channel.send(embed=embed)
+                                    break
 
     @red_commands.group()
     async def pinterest(self, ctx):
