@@ -55,6 +55,7 @@ class PinterestCog(rcommands.Cog):
     async def set_query(self, ctx: rcommands.Context, *, query: str):
         """Sets the search query for Pinterest."""
         guild_id = ctx.guild.id
+        self._ensure_settings(guild_id)
         self.settings[guild_id]['query'] = query
         await ctx.send(f"Search query set to: {query}")
 
@@ -62,6 +63,7 @@ class PinterestCog(rcommands.Cog):
     async def set_interval(self, ctx: rcommands.Context, interval: int):
         """Sets the interval (in seconds) for posting images or GIFs."""
         guild_id = ctx.guild.id
+        self._ensure_settings(guild_id)
         self.settings[guild_id]['interval'] = interval
         await ctx.send(f"Interval set to: {interval} seconds")
 
@@ -69,6 +71,7 @@ class PinterestCog(rcommands.Cog):
     async def set_channel(self, ctx: rcommands.Context, channel: discord.TextChannel):
         """Sets the channel for posting images or GIFs."""
         guild_id = ctx.guild.id
+        self._ensure_settings(guild_id)
         self.settings[guild_id]['channel'] = channel
         await ctx.send(f"Channel set to: {channel.mention}")
 
@@ -116,16 +119,14 @@ class PinterestCog(rcommands.Cog):
                 return random.choice(image_urls)
         return None
 
-    @rcommands.Cog.listener()
-    async def on_ready(self):
-        for guild in self.bot.guilds:
-            if guild.id not in self.settings:
-                self.settings[guild.id] = {
-                    'query': 'cats',
-                    'interval': 15,
-                    'channel': None,
-                    'search_task': None
-                }
+    def _ensure_settings(self, guild_id):
+        if guild_id not in self.settings:
+            self.settings[guild_id] = {
+                'query': 'cats',
+                'interval': 15,
+                'channel': None,
+                'search_task': None
+            }
 
 def setup(bot: Red):
     bot.add_cog(PinterestCog(bot))
