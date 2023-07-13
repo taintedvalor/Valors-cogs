@@ -9,7 +9,7 @@ class Pinterest(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
-        default_guild = {"is_running": False, "category": "default", "interval": 15, "channel": None}
+        default_guild = {"is_running": False, "search_query": "", "interval": 15, "channel": None}
         self.config.register_guild(**default_guild)
         self.session = requests.Session()
         self.post_images.start()
@@ -40,10 +40,10 @@ class Pinterest(commands.Cog):
             await ctx.send("Pinterest image/GIF search stopped.")
 
     @pinterest.command()
-    async def setcategory(self, ctx, category):
-        """Set the search category for Pinterest"""
-        await self.config.guild(ctx.guild).category.set(category)
-        await ctx.send(f"Search category set to '{category}'.")
+    async def setquery(self, ctx, *, query):
+        """Set the search query for Pinterest"""
+        await self.config.guild(ctx.guild).search_query.set(query)
+        await ctx.send(f"Search query set to '{query}'.")
 
     @pinterest.command()
     async def setinterval(self, ctx, interval):
@@ -68,14 +68,14 @@ class Pinterest(commands.Cog):
     async def settings(self, ctx):
         """Show the current settings for Pinterest in this guild"""
         is_running = await self.config.guild(ctx.guild).is_running()
-        category = await self.config.guild(ctx.guild).category()
+        search_query = await self.config.guild(ctx.guild).search_query()
         interval = await self.config.guild(ctx.guild).interval()
         channel_id = await self.config.guild(ctx.guild).channel()
         channel_mention = ctx.guild.get_channel(channel_id).mention if channel_id else "Not set"
 
         settings_info = f"**Settings for Pinterest in this guild:**\n"
         settings_info += f"Is Running: {'Yes' if is_running else 'No'}\n"
-        settings_info += f"Category: {category}\n"
+        settings_info += f"Search Query: {search_query}\n"
         settings_info += f"Interval: {interval} seconds\n"
         settings_info += f"Posting Channel: {channel_mention}\n"
 
@@ -87,14 +87,14 @@ class Pinterest(commands.Cog):
             is_running = await self.config.guild(guild).is_running()
             interval = await self.config.guild(guild).interval()
             channel_id = await self.config.guild(guild).channel()
-            category = await self.config.guild(guild).category()
+            search_query = await self.config.guild(guild).search_query()
 
-            if is_running and channel_id:
+            if is_running and channel_id and search_query:
                 channel = guild.get_channel(channel_id)
                 if channel is None:
                     continue
 
-                images = self.fetch_pinterest_images(category)
+                images = self.fetch_pinterest_images(search_query)
 
                 if not images:
                     await channel.send("No images/GIFs found.")
@@ -106,8 +106,9 @@ class Pinterest(commands.Cog):
 
         await asyncio.sleep(interval)
 
-    def fetch_pinterest_images(self, category):
-        search_url = f"https://www.pinterest.com/search/pins/?q={category}&rs=typed"
+    def fetch_pinterest_images(self, search_query):
+        search_query = search_query.replace(" ", "+")
+        search_url = f"https://www.pinterest.com/search/pins/?q={search_query}"
         response = self.session.get(search_url)
         soup = BeautifulSoup(response.content, "html.parser")
         image_tags = soup.find_all("img")
