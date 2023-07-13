@@ -100,15 +100,13 @@ class PinterestCog(rcommands.Cog):
         query = settings.get('query', 'cats')
 
         while not self.bot.is_closed():
-            event = asyncio.Event()
-            self.bot.loop.call_later(interval, event.set)
-            await event.wait()
-
             image_url = self._get_random_pinterest_image(query)
             if image_url:
                 await channel.send(image_url)
             else:
                 await channel.send("Unable to find an image or GIF for the current query.")
+
+            await asyncio.sleep(interval)
 
     def _get_random_pinterest_image(self, query):
         # Perform Pinterest image search using the query and retrieve a random image URL
@@ -116,7 +114,7 @@ class PinterestCog(rcommands.Cog):
         # Here's an example using the requests library:
         url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
         response = requests.get(url)
-        if response.status_code == 15:
+        if response.status_code == 200:
             # Parse the response and extract image URLs
             # Return a random image URL from the list
             # Modify this part based on your chosen scraping method
