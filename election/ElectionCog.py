@@ -137,8 +137,21 @@ class ElectionCog(commands.Cog):
             self.participants.append(ctx.author)
             self.participant_emojis[ctx.author.id] = emoji
             await ctx.send(f"{ctx.author.mention} has joined the election with the emoji {emoji}.")
+            await self.update_election_embed()
         else:
             await ctx.send(f"{ctx.author.mention} is already part of the election.")
+
+    async def update_election_embed(self):
+        election_channel = self.bot.get_channel(self.election_channel_id)
+        message = await election_channel.history().find(lambda m: m.author == self.bot.user)
+        if message:
+            embed = message.embeds[0]
+            embed.clear_fields()
+            embed.description = "React to the corresponding emoji to vote for a participant."
+            for user in self.participants:
+                emoji = self.participant_emojis.get(user.id, "❓")
+                embed.add_field(name=user.name, value=f"{user.mention} {emoji}", inline=False)
+            await message.edit(embed=embed)
 
     @election.command(name="settings")
     async def settings_command(self, ctx):
