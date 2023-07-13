@@ -1,100 +1,82 @@
-from redbot.core import commands, Config
 import discord
-import requests
-from bs4 import BeautifulSoup
+from redbot.core import commands, Config, checks
 import asyncio
-from discord.ext import tasks
+import requests
 
 class PinterestCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier
-        default_guild = {
-            "channel": None,
-            "query": None,
-            "loop_started": False
+        self.config = Config.get_conf(self, identifier=1234567890)
+        default_settings = {
+            "query_interval": 15,  # in seconds
+            "channel_id": None,
+            "query": None
         }
-        self.config.register_guild(**default_guild)
-        self.pinterest_loop.start()
+        self.config.register_guild(**default_settings)
+        self.query_task = None
 
-    def cog_unload(self):
-        self.pinterest_loop.cancel()
+    @commands.command()
+    @commands.guild_only()
+    @checks.admin()
+    async def pinterest_query(self, ctx, query: str):
+        """Starts sending Pinterest images based on the specified query."""
+        if self.query_task:
+            await ctx.send("A Pinterest query is already running. Use `[p]pinterest_stop` to stop it.")
+            return
 
-    @tasks.loop(seconds=15.0)
-    async def pinterest_loop(self):
-        for guild_id in await self.config.all_guilds():
-            guild = self.bot.get_guild(guild_id)
-            if guild:
-                async with self.config.guild(guild).all() as guild_config:
-                    query = guild_config["query"]
-                    channel_id = guild_config["channel"]
-                    loop_started = guild_config["loop_started"]
-                    
-                    if loop_started and query and channel_id:
-                        channel = guild.get_channel(channel_id)
-                        if channel:
-                            url = f"https://www.pinterest.com/search/pins/?q={query}"
-                            response = requests.get(url)
-                            soup = BeautifulSoup(response.text, "html.parser")
-                            images = soup.find_all("img")
-                            if images:
-                                for image in images:
-                                    if image.has_attr("src"):
-                                        image_url = image["src"]
-                                        if image_url.startswith("https://i.pinimg.com"):
-                                            embed = discord.Embed()
-                                            if image_url.endswith((".gif", ".gifv")):
-                                                embed.set_image(url=image_url)
-                                            else:
-                                                embed.set_thumbnail(url=image_url)
-                                            await channel.send(embed=embed)
-                                            break
-
-    @commands.group()
-    async def pinterest(self, ctx):
-        """Pinterest image-related commands."""
-        pass
-
-    @pinterest.command()
-    async def query(self, ctx, query: str):
-        """Set the query for Pinterest image search."""
+        await self.config.guild(ctx.guild).query_interval.set(15)
+        await self.config.guild(ctx.guild).channel_id.set(ctx.channel.id)
         await self.config.guild(ctx.guild).query.set(query)
-        await ctx.send(f"The query for Pinterest image search has been set to: {query}")
+        self.query_task = self.bot.loop.create_task(self.send_images_task(ctx.guild))
+        await ctx.send(f"Started Pinterest query for '{query}'.")
 
-    @pinterest.command()
-    async def start(self, ctx):
-        """Start sending images from Pinterest."""
-        loop_started = await self.config.guild(ctx.guild).loop_started()
-        if loop_started:
-            await ctx.send("The Pinterest image loop is already running.")
+    @commands.command()
+    @commands.guild_only()
+    @checks.admin()
+    async def pinterest_stop(self, ctx):
+        """Stops the currently running Pinterest query."""
+        if self.query_task:
+            self.query_task.cancel()
+            self.query_task = None
+            await ctx.send("Stopped the Pinterest query.")
         else:
-            channel_id = await self.config.guild(ctx.guild).channel()
-            if not channel_id:
-                await ctx.send("The designated channel for Pinterest images and GIFs is not set.")
-            else:
-                await self.config.guild(ctx.guild).loop_started.set(True)
-                await ctx.send("Pinterest image loop started.")
+            await ctx.send("No Pinterest query is currently running.")
 
-    @pinterest.command()
-    async def stop(self, ctx):
-        """Stop sending images from Pinterest."""
-        loop_started = await self.config.guild(ctx.guild).loop_started()
-        if loop_started:
-            await self.config.guild(ctx.guild).loop_started.set(False)
-            await ctx.send("Pinterest image loop stopped.")
-        else:
-            await ctx.send("The Pinterest image loop is not currently running.")
+    async def send_images_task(self, guild):
+        while True:
+            if self.query_task is None:
+                break
 
-    @commands.is_owner()
-    @pinterest.command(name="channel")
-    async def set_channel(self, ctx, channel: discord.TextChannel):
-        """Set the designated guild channel to send Pinterest images and GIFs."""
-        await self.config.guild(ctx.guild).channel.set(channel.id)
-        await ctx.send(f"The designated channel for Pinterest images and GIFs has been set to {channel.mention}.")
+            query_interval = await self.config.guild(guild).query_interval()
+            channel_id = await self.config.guild(guild).channel_id()
+            query = await self.config.guild(guild).query()
 
-    @commands.Cog.listener()
-    async def on_guild_remove(self, guild):
-        await self.config.clear_all()
+            image_url = self.get_pinterest_image(query)
+            if image_url:
+                channel = self.bot.get_channel(channel_id)
+                await channel.send(image_url)
+
+            await asyncio.sleep(query_interval)
+
+    def get_pinterest_image(self, query):
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+        url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            # Parse the response HTML and extract the image URL
+            # You may need to use a different method depending on the structure of the Pinterest page
+            # Here's an example using BeautifulSoup
+            from bs4 import BeautifulSoup
+
+            soup = BeautifulSoup(response.content, "html.parser")
+            image_element = soup.select_one("img[src^='https://i.pinimg.com/']")
+            if image_element:
+                return image_element["src"]
+
+        return None
 
 def setup(bot):
     bot.add_cog(PinterestCog(bot))
