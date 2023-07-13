@@ -1,5 +1,5 @@
-from .Pinterest import Pinterest
+from .Pinterest import PinterestCog
 
 
 async def setup(bot):
-    await bot.add_cog(Pinterest(bot))
+    await bot.add_cog(PinterestCog(bot))
