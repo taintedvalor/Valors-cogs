@@ -116,7 +116,7 @@ class PinterestCog(rcommands.Cog):
         # Here's an example using the requests library:
         url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
         response = requests.get(url)
-        if response.status_code == 200:
+        if response.status_code == 15:
             # Parse the response and extract image URLs
             # Return a random image URL from the list
             # Modify this part based on your chosen scraping method
