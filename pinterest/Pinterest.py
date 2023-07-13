@@ -5,6 +5,7 @@ import requests
 from datetime import datetime, timedelta
 from redbot.core import commands as rcommands
 from redbot.core.bot import Red
+import asyncio
 
 class PinterestCog(rcommands.Cog):
     def __init__(self, bot: Red):
@@ -93,14 +94,21 @@ class PinterestCog(rcommands.Cog):
 
     async def _search_pinterest(self, guild_id):
         settings = self.settings.get(guild_id, {})
-        while not self.bot.is_closed():
-            if settings.get('query') and settings.get('interval') and settings.get('channel'):
-                image_url = self._get_random_pinterest_image(settings['query'])
-                if image_url:
-                    channel = self.bot.get_channel(settings['channel'].id)
-                    await channel.send(image_url)
+        interval = settings.get('interval', 15)
+        channel_id = settings.get('channel')
+        channel = self.bot.get_channel(channel_id)
+        query = settings.get('query', 'cats')
 
-            await discord.utils.sleep_until(datetime.now() + timedelta(seconds=settings['interval']))
+        while not self.bot.is_closed():
+            event = asyncio.Event()
+            self.bot.loop.call_later(interval, event.set)
+            await event.wait()
+
+            image_url = self._get_random_pinterest_image(query)
+            if image_url:
+                await channel.send(image_url)
+            else:
+                await channel.send("Unable to find an image or GIF for the current query.")
 
     def _get_random_pinterest_image(self, query):
         # Perform Pinterest image search using the query and retrieve a random image URL
