@@ -1,123 +1,100 @@
-from redbot.core import commands, Config
 import discord
-from discord.ext import tasks
+from discord.ext import commands
+import asyncio
+import random
 import requests
 from bs4 import BeautifulSoup
-import asyncio
 
 class Pinterest(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)
-        default_guild = {"is_running": False, "search_query": "", "interval": 15, "channel": None}
-        self.config.register_guild(**default_guild)
-        self.session = requests.Session()
-        self.post_images.start()
+        self.search_query = None
+        self.interval = 15  # Default interval of 15 sec
+        self.channel = None
+        self.task = None
 
-    @commands.group()
-    async def pinterest(self, ctx):
-        """Automatically pull images and GIFs from Pinterest"""
-        pass
+    @commands.group(name='pinterest', invoke_without_command=True)
+    async def pinterest_group(self, ctx):
+        """Pinterest commands"""
+        await ctx.send_help(ctx.command)
 
-    @pinterest.command()
-    async def start(self, ctx):
-        """Start the Pinterest image/GIF search"""
-        is_running = await self.config.guild(ctx.guild).is_running()
-        if is_running:
-            await ctx.send("Pinterest image/GIF search is already running.")
+    @pinterest_group.command(name='start')
+    async def pinterest_start(self, ctx):
+        """Starts the automated Pinterest image/GIF search."""
+        if self.task is None:
+            self.task = self.bot.loop.create_task(self._pinterest_search())
+            await ctx.send('Pinterest search started.')
         else:
-            await self.config.guild(ctx.guild).is_running.set(True)
-            await ctx.send("Pinterest image/GIF search started.")
+            await ctx.send('Pinterest search is already running.')
 
-    @pinterest.command()
-    async def stop(self, ctx):
-        """Stop the Pinterest image/GIF search"""
-        is_running = await self.config.guild(ctx.guild).is_running()
-        if not is_running:
-            await ctx.send("Pinterest image/GIF search is not running.")
+    @pinterest_group.command(name='stop')
+    async def pinterest_stop(self, ctx):
+        """Stops the automated Pinterest image/GIF search."""
+        if self.task is not None:
+            self.task.cancel()
+            self.task = None
+            await ctx.send('Pinterest search stopped.')
         else:
-            await self.config.guild(ctx.guild).is_running.set(False)
-            await ctx.send("Pinterest image/GIF search stopped.")
+            await ctx.send('Pinterest search is not running.')
 
-    @pinterest.command()
-    async def setquery(self, ctx, *, query):
-        """Set the search query for Pinterest"""
-        await self.config.guild(ctx.guild).search_query.set(query)
-        await ctx.send(f"Search query set to '{query}'.")
+    @pinterest_group.command(name='setquery')
+    async def pinterest_set_query(self, ctx, *, query):
+        """Sets the search query for Pinterest."""
+        self.search_query = query
+        await ctx.send(f'Search query set to: {query}')
 
-    @pinterest.command()
-    async def setinterval(self, ctx, interval):
-        """Set the interval (in seconds) for posting images or GIFs"""
+    @pinterest_group.command(name='setinterval')
+    async def pinterest_set_interval(self, ctx, interval: int):
+        """Sets the interval (in seconds) for posting images or GIFs."""
+        if interval < 10:
+            await ctx.send('Interval should be at least 10 seconds.')
+        else:
+            self.interval = interval
+            await ctx.send(f'Interval set to: {interval} seconds')
+
+    @pinterest_group.command(name='setchannel')
+    async def pinterest_set_channel(self, ctx, channel: discord.TextChannel):
+        """Sets the channel for posting images or GIFs."""
+        self.channel = channel
+        await ctx.send(f'Channel set to: {channel.mention}')
+
+    @pinterest_group.command(name='settings')
+    async def pinterest_settings(self, ctx):
+        """Shows the current settings for Pinterest in the current guild."""
+        query = self.search_query or 'Not set'
+        interval = self.interval
+        channel = self.channel or 'Not set'
+        embed = discord.Embed(title='Pinterest Settings', color=discord.Color.blue())
+        embed.add_field(name='Search Query', value=query, inline=False)
+        embed.add_field(name='Interval (seconds)', value=interval, inline=False)
+        embed.add_field(name='Channel', value=channel, inline=False)
+        await ctx.send(embed=embed)
+
+    async def _pinterest_search(self):
+        while True:
+            if self.search_query and self.channel:
+                image_url = await self._scrape_pinterest()
+                if image_url:
+                    embed = discord.Embed(color=discord.Color.blue())
+                    embed.set_image(url=image_url)
+                    await self.channel.send(embed=embed)
+            await asyncio.sleep(self.interval)
+
+    async def _scrape_pinterest(self):
         try:
-            interval = int(interval)
-            if interval < 1:
-                await ctx.send("Interval must be a positive integer.")
+            url = f'https://www.pinterest.com/search/pins/?q={self.search_query}&rs=typed'
+            response = requests.get(url)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            pins = soup.find_all('a', {'class': 'pinImageWrapper'})
+            if pins:
+                pin = random.choice(pins)
+                image_url = pin.find('img').get('src')
+                return image_url
             else:
-                await self.config.guild(ctx.guild).interval.set(interval)
-                await ctx.send(f"Interval set to {interval} seconds.")
-        except ValueError:
-            await ctx.send("Invalid interval. Please provide a positive integer.")
-
-    @pinterest.command()
-    async def setchannel(self, ctx, channel: discord.TextChannel):
-        """Set the channel for posting images or GIFs"""
-        await self.config.guild(ctx.guild).channel.set(channel.id)
-        await ctx.send(f"Posting channel set to {channel.mention}.")
-
-    @pinterest.command()
-    async def settings(self, ctx):
-        """Show the current settings for Pinterest in this guild"""
-        is_running = await self.config.guild(ctx.guild).is_running()
-        search_query = await self.config.guild(ctx.guild).search_query()
-        interval = await self.config.guild(ctx.guild).interval()
-        channel_id = await self.config.guild(ctx.guild).channel()
-        channel_mention = ctx.guild.get_channel(channel_id).mention if channel_id else "Not set"
-
-        settings_info = f"**Settings for Pinterest in this guild:**\n"
-        settings_info += f"Is Running: {'Yes' if is_running else 'No'}\n"
-        settings_info += f"Search Query: {search_query}\n"
-        settings_info += f"Interval: {interval} seconds\n"
-        settings_info += f"Posting Channel: {channel_mention}\n"
-
-        await ctx.send(settings_info)
-
-    @tasks.loop(seconds=15)
-    async def post_images(self):
-        for guild in self.bot.guilds:
-            is_running = await self.config.guild(guild).is_running()
-            interval = await self.config.guild(guild).interval()
-            channel_id = await self.config.guild(guild).channel()
-            search_query = await self.config.guild(guild).search_query()
-
-            if is_running and channel_id and search_query:
-                channel = guild.get_channel(channel_id)
-                if channel is None:
-                    continue
-
-                images = self.fetch_pinterest_images(search_query)
-
-                if not images:
-                    await channel.send("No images/GIFs found.")
-
-                for image_url in images:
-                    image_data = self.session.get(image_url).content
-                    file = discord.File(image_data, filename="pinterest_image.gif" if image_url.endswith(".gif") else "pinterest_image.jpg")
-                    await channel.send(file=file)
-
-        await asyncio.sleep(interval)
-
-    def fetch_pinterest_images(self, search_query):
-        search_query = search_query.replace(" ", "+")
-        search_url = f"https://www.pinterest.com/search/pins/?q={search_query}"
-        response = self.session.get(search_url)
-        soup = BeautifulSoup(response.content, "html.parser")
-        image_tags = soup.find_all("img")
-        image_urls = [img["src"] for img in image_tags if img.get("src")]
-        return image_urls
-
-    @post_images.before_loop
-    async def before_post_images(self):
-        await self.bot.wait_until_ready()
+                return None
+        except Exception as e:
+            print(f'Pinterest scraping error: {e}')
+            return None
 
 def setup(bot):
     bot.add_cog(Pinterest(bot))
