@@ -107,7 +107,7 @@ class Pinterest(commands.Cog):
         await asyncio.sleep(interval)
 
     def fetch_pinterest_images(self, category):
-        search_url = f"https://www.pinterest.com/search/pins/?q={category}"
+        search_url = f"https://www.pinterest.com/search/pins/?q={category}&rs=typed"
         response = self.session.get(search_url)
         soup = BeautifulSoup(response.content, "html.parser")
         image_tags = soup.find_all("img")
