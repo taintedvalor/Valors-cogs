@@ -3,7 +3,7 @@ import discord
 import requests
 from bs4 import BeautifulSoup
 import asyncio
-
+from discord.ext import tasks
 
 class PinterestCog(commands.Cog):
     def __init__(self, bot):
@@ -28,13 +28,13 @@ class PinterestCog(commands.Cog):
                     query = guild_config["query"]
                     channel_id = guild_config["channel"]
                     channel = guild.get_channel(channel_id)
-
+                    
                     if query and channel:
                         url = f"https://www.pinterest.com/search/pins/?q={query}"
                         response = requests.get(url)
                         soup = BeautifulSoup(response.text, "html.parser")
                         images = soup.find_all("img")
-
+                        
                         for image in images:
                             if image.has_attr("src"):
                                 image_url = image["src"]
