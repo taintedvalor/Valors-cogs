@@ -1,9 +1,10 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import asyncio
 import random
 import requests
 from bs4 import BeautifulSoup
+from redbot.core import Config
 
 class Pinterest(commands.Cog):
     def __init__(self, bot):
