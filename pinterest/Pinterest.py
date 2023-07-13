@@ -37,18 +37,18 @@ class PinterestCog(commands.Cog):
                             response = requests.get(url)
                             soup = BeautifulSoup(response.text, "html.parser")
                             images = soup.find_all("img")
-                            
-                            for image in images:
-                                if image.has_attr("src"):
-                                    image_url = image["src"]
-                                    if image_url.startswith("https://i.pinimg.com"):
-                                        embed = discord.Embed()
-                                        if image_url.endswith((".gif", ".gifv")):
-                                            embed.set_image(url=image_url)
-                                        else:
-                                            embed.set_thumbnail(url=image_url)
-                                        await channel.send(embed=embed)
-                                        break
+                            if images:
+                                for image in images:
+                                    if image.has_attr("src"):
+                                        image_url = image["src"]
+                                        if image_url.startswith("https://i.pinimg.com"):
+                                            embed = discord.Embed()
+                                            if image_url.endswith((".gif", ".gifv")):
+                                                embed.set_image(url=image_url)
+                                            else:
+                                                embed.set_thumbnail(url=image_url)
+                                            await channel.send(embed=embed)
+                                            break
 
     @commands.group()
     async def pinterest(self, ctx):
@@ -73,7 +73,6 @@ class PinterestCog(commands.Cog):
                 await ctx.send("The designated channel for Pinterest images and GIFs is not set.")
             else:
                 await self.config.guild(ctx.guild).loop_started.set(True)
-                self.pinterest_loop.start()
                 await ctx.send("Pinterest image loop started.")
 
     @pinterest.command()
@@ -82,7 +81,6 @@ class PinterestCog(commands.Cog):
         loop_started = await self.config.guild(ctx.guild).loop_started()
         if loop_started:
             await self.config.guild(ctx.guild).loop_started.set(False)
-            self.pinterest_loop.stop()
             await ctx.send("Pinterest image loop stopped.")
         else:
             await ctx.send("The Pinterest image loop is not currently running.")
