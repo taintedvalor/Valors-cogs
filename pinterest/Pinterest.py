@@ -1,7 +1,7 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import random
-import requests
+import aiohttp
 from datetime import datetime, timedelta
 from redbot.core import commands as rcommands
 from redbot.core.bot import Red
@@ -11,6 +11,7 @@ class PinterestCog(rcommands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.settings = {}
+        self.search_tasks = {}
 
     @rcommands.group(name='pinterest', aliases=['pin'], invoke_without_command=True)
     @rcommands.has_permissions(manage_guild=True)
@@ -22,35 +23,30 @@ class PinterestCog(rcommands.Cog):
     async def start_pinterest_search(self, ctx: rcommands.Context):
         """Starts the automated Pinterest image/GIF search."""
         guild_id = ctx.guild.id
-        if guild_id in self.settings:
-            settings = self.settings[guild_id]
-            if settings.get('search_task') and not settings['search_task'].done():
-                await ctx.send("Pinterest search is already running.")
-                return
+        if guild_id in self.search_tasks:
+            await ctx.send("Pinterest search is already running.")
+            return
 
-            if not settings.get('query') or not settings.get('interval') or not settings.get('channel'):
-                await ctx.send("Please set the search query, interval, and channel before starting.")
-                return
-
-            settings['search_task'] = self.bot.loop.create_task(self._search_pinterest(guild_id))
-            await ctx.send("Pinterest search started.")
-        else:
+        settings = self.settings.get(guild_id)
+        if not settings or not settings.get('query') or not settings.get('interval') or not settings.get('channel'):
             await ctx.send("Please set the search query, interval, and channel before starting.")
+            return
+
+        search_task = self.bot.loop.create_task(self._search_pinterest(guild_id))
+        self.search_tasks[guild_id] = search_task
+        await ctx.send("Pinterest search started.")
 
     @pinterest.command(name='stop')
     async def stop_pinterest_search(self, ctx: rcommands.Context):
         """Stops the automated Pinterest image/GIF search."""
         guild_id = ctx.guild.id
-        if guild_id in self.settings:
-            settings = self.settings[guild_id]
-            if settings.get('search_task') and not settings['search_task'].done():
-                settings['search_task'].cancel()
-                settings['search_task'] = None
-                await ctx.send("Pinterest search stopped.")
-            else:
-                await ctx.send("Pinterest search is not running.")
+        search_task = self.search_tasks.get(guild_id)
+        if search_task and not search_task.done():
+            search_task.cancel()
+            del self.search_tasks[guild_id]
+            await ctx.send("Pinterest search stopped.")
         else:
-            await ctx.send("Pinterest search is not configured for this guild.")
+            await ctx.send("Pinterest search is not running.")
 
     @pinterest.command(name='setquery')
     async def set_query(self, ctx: rcommands.Context, *, query: str):
@@ -100,7 +96,7 @@ class PinterestCog(rcommands.Cog):
         query = settings.get('query', 'cats')
 
         while not self.bot.is_closed():
-            image_url = self._get_random_pinterest_image(query)
+            image_url = await self._get_random_pinterest_image(query)
             if image_url:
                 await channel.send(image_url)
             else:
@@ -108,21 +104,19 @@ class PinterestCog(rcommands.Cog):
 
             await asyncio.sleep(interval)
 
-    def _get_random_pinterest_image(self, query):
-        # Perform Pinterest image search using the query and retrieve a random image URL
-        # You can use any Pinterest image scraping method or library of your choice
-        # Here's an example using the requests library:
-        url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
-        response = requests.get(url)
-        if response.status_code == 200:
-            # Parse the response and extract image URLs
-            # Return a random image URL from the list
-            # Modify this part based on your chosen scraping method
-            image_urls = []
-            # Extract image URLs from the response
-            # ...
-            if image_urls:
-                return random.choice(image_urls)
+    async def _get_random_pinterest_image(self, query):
+        async with aiohttp.ClientSession() as session:
+            url = f"https://www.pinterest.com/search/pins/?q={query}&rs=typed"
+            async with session.get(url) as response:
+                if response.status == 200:
+                    text = await response.text()
+                    # Extract image URLs from the response using a suitable method
+                    # Modify this part based on your chosen scraping method
+                    image_urls = []
+                    # Extract image URLs from the response
+                    # ...
+                    if image_urls:
+                        return random.choice(image_urls)
         return None
 
     def _ensure_settings(self, guild_id):
@@ -130,8 +124,7 @@ class PinterestCog(rcommands.Cog):
             self.settings[guild_id] = {
                 'query': 'cats',
                 'interval': 15,
-                'channel': None,
-                'search_task': None
+                'channel': None
             }
 
 def setup(bot: Red):
