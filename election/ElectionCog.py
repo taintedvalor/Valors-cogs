@@ -34,6 +34,9 @@ class ElectionCog(commands.Cog):
 
     @election.command(name="setperiod")
     async def set_election_period_command(self, ctx, period: int):
+        if period <= 0:
+            await ctx.send("Invalid election period. Please provide a positive integer value.")
+            return
         self.election_period = period
         await ctx.send(f"Election period set to {period} seconds.")
 
@@ -44,6 +47,10 @@ class ElectionCog(commands.Cog):
             return
 
         election_channel = self.bot.get_channel(self.election_channel_id)
+        if election_channel is None:
+            await ctx.send("The configured election channel does not exist.")
+            return
+
         await election_channel.purge()
 
         embed = discord.Embed(title="Election", description="React to the corresponding emoji to vote for a participant.")
@@ -122,12 +129,28 @@ class ElectionCog(commands.Cog):
 
     @election.command(name="join")
     async def join_election_command(self, ctx, emoji: str):
+        if len(emoji) > 1:
+            await ctx.send("Invalid emoji. Please provide a single character emoji.")
+            return
+
         if ctx.author not in self.participants:
             self.participants.append(ctx.author)
             self.participant_emojis[ctx.author.id] = emoji
             await ctx.send(f"{ctx.author.mention} has joined the election with the emoji {emoji}.")
         else:
             await ctx.send(f"{ctx.author.mention} is already part of the election.")
+
+    @election.command(name="settings")
+    async def settings_command(self, ctx):
+        election_channel = self.bot.get_channel(self.election_channel_id)
+        role_to_inherit = ctx.guild.get_role(self.role_to_inherit_id)
+
+        embed = discord.Embed(title="Election Settings", color=discord.Color.blue())
+        embed.add_field(name="Election Channel", value=election_channel.mention if election_channel else "Not set")
+        embed.add_field(name="Role to Inherit", value=role_to_inherit.mention if role_to_inherit else "Not set")
+        embed.add_field(name="Election Period", value=f"{self.election_period} seconds")
+
+        await ctx.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(ElectionCog(bot))
