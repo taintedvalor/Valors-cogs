@@ -8,7 +8,7 @@ import asyncio
 class ImageScrapingCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.query = "dog"
+        self.query = "default query"
         self.channel_id = 1129537678669529209  # Replace with your desired channel ID
 
     @commands.command()
