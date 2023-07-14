@@ -1,7 +1,7 @@
 import discord
 import asyncio
 from redbot.core import commands
-from redbot.core import tasks
+from discord.ext import tasks
 import requests
 
 class PinterestCog(commands.Cog):
@@ -43,7 +43,7 @@ class PinterestCog(commands.Cog):
         # Make a request to ScraperAPI or perform web scraping to retrieve images based on the query
         # Return a list of image URLs
         # Example implementation using ScraperAPI and requests library:
-        api_key = "26b90206edb17be57317837cb3980c39"
+        api_key = "YOUR_SCRAPER_API_KEY"
         url = f"https://api.scraperapi.com/?api_key={api_key}&url=https://www.pinterest.com/search/pins/?q={query}"
         response = requests.get(url)
         if response.status_code == 200:
