@@ -1,5 +1,5 @@
-from .Pinterest import ImageScraperCog
+from .Pinterest import PinterestCog
 
 
 async def setup(bot):
-    await bot.add_cog(ImageScraperCog(bot))
+    await bot.add_cog(PinterestCog(bot))
