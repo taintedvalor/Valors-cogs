@@ -18,7 +18,8 @@ class autopic(commands.Cog):
         default_guild_settings = {
             "channel_id": None,
             "interval": 15,
-            "nsfw_words": ["nsfw", "18+", "explicit"]
+            "nsfw_words": ["nsfw", "18+", "explicit"],
+            "last_query_nsfw": False
         }
 
         self.config.register_guild(**default_guild_settings)
@@ -27,7 +28,7 @@ class autopic(commands.Cog):
     async def autopic(self, ctx):
         """Automatic picture scraping and posting."""
         if ctx.invoked_subcommand is None:
-            await ctx.send("hello its a me a?.")
+            await ctx.send("hello its ah me?")
 
     @autopic.command(name="start")
     async def start_autopic(self, ctx, *, query: str = "default query"):
@@ -38,7 +39,7 @@ class autopic(commands.Cog):
         else:
             channel = self.bot.get_channel(self.channel_id)
             await ctx.send(f"Image scraping started with query: {self.query} in channel {channel.mention}.")
-        await self.send_images_periodically()
+        await self.send_images_periodically(ctx.guild)
 
     @autopic.command(name="setchannel")
     async def set_autopic_channel(self, ctx, channel: discord.TextChannel = None):
@@ -86,23 +87,30 @@ class autopic(commands.Cog):
                        f"Interval: {guild_settings['interval']} seconds\n"
                        f"NSFW words: {nsfw_words}")
 
-    async def send_images_periodically(self):
+    async def send_images_periodically(self, guild):
         while True:
-            await self.scrape_and_send_image()
+            await self.scrape_and_send_image(guild)
             await asyncio.sleep(self.interval)
 
-    async def scrape_and_send_image(self):
+    async def scrape_and_send_image(self, guild):
         try:
             search_results = self.google_search(self.query)
             image_url = random.choice(search_results)
             embed = discord.Embed()
             embed.set_image(url=image_url)
 
-            channel = self.bot.get_channel(self.channel_id)
+            channel_id = await self.config.guild(guild).channel_id()
+            channel = self.bot.get_channel(channel_id)
+            last_query_nsfw = await self.config.guild(guild).last_query_nsfw()
+
             if await self.check_nsfw_words(self.query):
-                await self.send_nsfw_confirmation(channel, embed)
+                if not last_query_nsfw:
+                    await self.send_nsfw_confirmation(channel, embed, guild)
+                else:
+                    await asyncio.sleep(self.interval)
             else:
                 await channel.send(embed=embed)
+                await self.config.guild(guild).last_query_nsfw.set(False)
         except Exception as e:
             print(f"Error scraping and sending image: {e}")
 
@@ -121,7 +129,7 @@ class autopic(commands.Cog):
                 return True
         return False
 
-    async def send_nsfw_confirmation(self, channel, embed):
+    async def send_nsfw_confirmation(self, channel, embed, guild):
         confirmation_message = await channel.send("Are you sure you want to post this image? It may contain NSFW content. Reply with 'yes' to confirm.")
         try:
             def check_author(message):
@@ -132,8 +140,10 @@ class autopic(commands.Cog):
 
             await self.bot.wait_for("message", check=check_content, timeout=self.nsfw_timeout)
             await channel.send(embed=embed)
+            await self.config.guild(guild).last_query_nsfw.set(False)
         except asyncio.TimeoutError:
             await confirmation_message.delete()
+            await self.config.guild(guild).last_query_nsfw.set(True)
 
     async def save_guild_settings(self, guild):
         await self.config.guild(guild).channel_id.set(self.channel_id)
