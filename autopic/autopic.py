@@ -18,8 +18,7 @@ class autopic(commands.Cog):
         default_guild_settings = {
             "channel_id": None,
             "interval": 15,
-            "nsfw_words": ["nsfw", "18+", "explicit"],
-            "nsfw_confirm": False
+            "nsfw_words": ["nsfw", "18+", "explicit"]
         }
 
         self.config.register_guild(**default_guild_settings)
@@ -28,7 +27,7 @@ class autopic(commands.Cog):
     async def autopic(self, ctx):
         """Automatic picture scraping and posting."""
         if ctx.invoked_subcommand is None:
-            await ctx.send("Invalid subcommand for autopic.")
+            await ctx.send("hello its ah me?.")
 
     @autopic.command(name="start")
     async def start_autopic(self, ctx, *, query: str = "default query"):
@@ -39,8 +38,7 @@ class autopic(commands.Cog):
         else:
             channel = self.bot.get_channel(self.channel_id)
             await ctx.send(f"Image scraping started with query: {self.query} in channel {channel.mention}.")
-        await self.config.guild(ctx.guild).nsfw_confirm.set(True)
-        await self.send_images_periodically(ctx.guild)
+        await self.send_images_periodically()
 
     @autopic.command(name="setchannel")
     async def set_autopic_channel(self, ctx, channel: discord.TextChannel = None):
@@ -57,7 +55,6 @@ class autopic(commands.Cog):
         self.query = "default query"
         self.channel_id = None
         await ctx.send("Image scraping stopped.")
-        await self.config.guild(ctx.guild).nsfw_confirm.set(False)
         await self.save_guild_settings(ctx.guild)
 
     @autopic.command(name="interval")
@@ -84,19 +81,17 @@ class autopic(commands.Cog):
         guild_settings = await self.config.guild(ctx.guild).all()
         channel = self.bot.get_channel(guild_settings["channel_id"])
         nsfw_words = ", ".join(guild_settings["nsfw_words"])
-        nsfw_confirm = guild_settings["nsfw_confirm"]
         await ctx.send(f"Autopic settings for this guild:\n"
                        f"Channel: {channel.mention if channel else 'Not set'}\n"
                        f"Interval: {guild_settings['interval']} seconds\n"
-                       f"NSFW words: {nsfw_words}\n"
-                       f"NSFW confirmation: {'Enabled' if nsfw_confirm else 'Disabled'}")
+                       f"NSFW words: {nsfw_words}")
 
-    async def send_images_periodically(self, guild):
+    async def send_images_periodically(self):
         while True:
-            await self.scrape_and_send_image(guild)
+            await self.scrape_and_send_image()
             await asyncio.sleep(self.interval)
 
-    async def scrape_and_send_image(self, guild):
+    async def scrape_and_send_image(self):
         try:
             search_results = self.google_search(self.query)
             image_url = random.choice(search_results)
@@ -104,8 +99,7 @@ class autopic(commands.Cog):
             embed.set_image(url=image_url)
 
             channel = self.bot.get_channel(self.channel_id)
-            nsfw_confirm = await self.config.guild(guild).nsfw_confirm()
-            if await self.check_nsfw_words(self.query) and nsfw_confirm:
+            if await self.check_nsfw_words(self.query):
                 await self.send_nsfw_confirmation(channel, embed)
             else:
                 await channel.send(embed=embed)
