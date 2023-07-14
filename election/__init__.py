@@ -1,5 +1,5 @@
-from .ElectionCog import ElectionCog
+from .ElectionCog import Election
 
 
 async def setup(bot):
-    await bot.add_cog(ElectionCog(bot))
+    await bot.add_cog(Election(bot))
