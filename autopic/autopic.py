@@ -5,13 +5,14 @@ from bs4 import BeautifulSoup
 import random
 import asyncio
 
-class autopic(commands.Cog):
+class ImageScrapingCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.query = "default query"
         self.channel_id = None
         self.interval = 15
         self.nsfw_words = ["nsfw", "18+", "explicit"]  # List of NSFW words
+        self.guild_queries = {}  # Dictionary to store guild-specific queries
 
     @commands.group()
     async def autopic(self, ctx):
@@ -22,9 +23,11 @@ class autopic(commands.Cog):
     @autopic.command(name="start")
     async def start_autopic(self, ctx, *, query: str = "default query"):
         self.query = query
+        if ctx.guild:
+            self.guild_queries[ctx.guild.id] = query
         if self.channel_id is None:
             self.channel_id = ctx.channel.id
-            await ctx.send(f"Image scraping started with query: {self.query} in this channel a channel was not set yet.")
+            await ctx.send(f"Image scraping started with query: {self.query} in this channel.")
         else:
             channel = self.bot.get_channel(self.channel_id)
             await ctx.send(f"Image scraping started with query: {self.query} in channel {channel.mention}.")
@@ -43,6 +46,7 @@ class autopic(commands.Cog):
     async def stop_autopic(self, ctx):
         self.query = "default query"
         self.channel_id = None
+        self.guild_queries.pop(ctx.guild.id, None)
         await ctx.send("Image scraping stopped.")
 
     @autopic.command(name="interval")
@@ -64,6 +68,14 @@ class autopic(commands.Cog):
         else:
             await ctx.send("Invalid action. Use 'add' or 'remove'.")
 
+    @autopic.command(name="setguildquery")
+    async def set_guild_query(self, ctx, *, query: str):
+        if ctx.guild:
+            self.guild_queries[ctx.guild.id] = query
+            await ctx.send(f"Query set for this guild: {query}")
+        else:
+            await ctx.send("This command can only be used within a guild.")
+
     async def send_images_periodically(self):
         while True:
             await self.scrape_and_send_image()
@@ -71,16 +83,17 @@ class autopic(commands.Cog):
 
     async def scrape_and_send_image(self):
         try:
-            search_results = self.google_search(self.query)
-            image_url = random.choice(search_results)
-            embed = discord.Embed()
-            embed.set_image(url=image_url)
-
-            channel = self.bot.get_channel(self.channel_id)
-            if await self.check_nsfw_words(self.query):
-                await channel.send("Are you sure you want to post this image? It may contain NSFW content.", embed=embed)
-            else:
-                await channel.send(embed=embed)
+            if self.channel_id is not None:
+                channel = self.bot.get_channel(self.channel_id)
+                query = self.guild_queries.get(channel.guild.id, self.query)
+                search_results = self.google_search(query)
+                image_url = random.choice(search_results)
+                embed = discord.Embed()
+                embed.set_image(url=image_url)
+                if await self.check_nsfw_words(query):
+                    await channel.send("Are you sure you want to post this image? It may contain NSFW content.", embed=embed)
+                else:
+                    await channel.send(embed=embed)
         except Exception as e:
             print(f"Error scraping and sending image: {e}")
 
@@ -100,4 +113,4 @@ class autopic(commands.Cog):
         return False
 
 def setup(bot):
-    bot.add_cog(autopic(bot))
+    bot.add_cog(ImageScrapingCog(bot))
