@@ -14,17 +14,30 @@ class PinterestCog(commands.Cog):
     def cog_unload(self):
         self.send_images.cancel()
 
-    @commands.command()
+    @commands.group()
+    async def pinterest(self, ctx):
+        """Pinterest commands."""
+        pass
+
+    @pinterest.command()
     async def setquery(self, ctx, query: str):
         """Set the query for Pinterest images."""
         self.query = query
         await ctx.send(f"Query set to: {query}")
 
-    @commands.command()
+    @pinterest.command()
     async def setchannel(self, ctx, channel: discord.TextChannel):
         """Set the channel for receiving Pinterest images."""
         self.channel_id = channel.id
         await ctx.send(f"Channel set to: {channel.mention}")
+
+    @pinterest.command()
+    async def start(self, ctx):
+        """Start sending Pinterest images."""
+        if self.query and self.channel_id:
+            await ctx.send("Sending Pinterest images...")
+        else:
+            await ctx.send("Query or channel not set. Use `setquery` and `setchannel` commands first.")
 
     @tasks.loop(seconds=15.0)
     async def send_images(self):
@@ -43,7 +56,7 @@ class PinterestCog(commands.Cog):
         # Make a request to ScraperAPI or perform web scraping to retrieve images based on the query
         # Return a list of image URLs
         # Example implementation using ScraperAPI and requests library:
-        api_key = "YOUR_SCRAPER_API_KEY"
+        api_key = "26b90206edb17be57317837cb3980c39"
         url = f"https://api.scraperapi.com/?api_key={api_key}&url=https://www.pinterest.com/search/pins/?q={query}"
         response = requests.get(url)
         if response.status_code == 200:
