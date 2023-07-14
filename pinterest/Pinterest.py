@@ -1,71 +1,63 @@
 import discord
-import asyncio
-from redbot.core import commands
-from discord.ext import tasks
+from discord.ext import commands
+import random
+from bs4 import BeautifulSoup
 import requests
+from redbot.core import commands
 
-class PinterestCog(commands.Cog):
+class PinterestScraper(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.query = ""
-        self.channel_id = None
-        self.send_images.start()
-
-    def cog_unload(self):
-        self.send_images.cancel()
+        self.channel_id = None  # Store the channel ID for the configured channel
+        self.search_term = None  # Store the search term for Pinterest images
+        self.scrape_pinterest.start()
 
     @commands.group()
     async def pinterest(self, ctx):
-        """Pinterest commands."""
-        pass
+        """Pinterest image scraper commands."""
+        if ctx.invoked_subcommand is None:
+            await ctx.send("Invalid command. Use `pinterest help` for more information.")
 
     @pinterest.command()
-    async def setquery(self, ctx, query: str):
-        """Set the query for Pinterest images."""
-        self.query = query
-        await ctx.send(f"Query set to: {query}")
-
-    @pinterest.command()
-    async def setchannel(self, ctx, channel: discord.TextChannel):
-        """Set the channel for receiving Pinterest images."""
+    async def set_channel(self, ctx, channel: discord.TextChannel):
+        """Set the channel to post the Pinterest images."""
         self.channel_id = channel.id
-        await ctx.send(f"Channel set to: {channel.mention}")
+        await ctx.send(f"Channel set to {channel.mention}.")
 
     @pinterest.command()
-    async def start(self, ctx):
-        """Start sending Pinterest images."""
-        if self.query and self.channel_id:
-            await ctx.send("Sending Pinterest images...")
-        else:
-            await ctx.send("Query or channel not set. Use `setquery` and `setchannel` commands first.")
+    async def start(self, ctx, *, search_term: str):
+        """Start the Pinterest image scraping."""
+        self.search_term = search_term
+        await ctx.send(f"Pinterest scraping started with search term: {search_term}.")
+    
+    @pinterest.command()
+    async def stop(self, ctx):
+        """Stop the Pinterest image scraping."""
+        self.search_term = None
+        await ctx.send("Pinterest scraping stopped.")
 
-    @tasks.loop(seconds=15.0)
-    async def send_images(self):
-        if self.query and self.channel_id:
-            images = self.get_pinterest_images(self.query)
+    @tasks.loop(seconds=15)
+    async def scrape_pinterest(self):
+        if self.channel_id is not None and self.search_term is not None:
             channel = self.bot.get_channel(self.channel_id)
-            if channel:
-                for image in images:
-                    await channel.send(image)
+            if channel is not None:
+                # Scrape Pinterest for the specified search term
+                pinterest_url = f"https://www.pinterest.com/search/pins/?q={self.search_term}"
+                response = requests.get(pinterest_url)
+                soup = BeautifulSoup(response.text, 'html.parser')
+                image_elements = soup.find_all('img')
+                random_image = random.choice(image_elements)
 
-    @send_images.before_loop
-    async def before_send_images(self):
+                # Create an embed with the image link
+                embed = discord.Embed()
+                embed.set_image(url=random_image['src'])
+
+                # Post the embed in the configured channel
+                await channel.send(embed=embed)
+
+    @scrape_pinterest.before_loop
+    async def before_scrape_pinterest(self):
         await self.bot.wait_until_ready()
 
-    def get_pinterest_images(self, query):
-        # Make a request to ScraperAPI or perform web scraping to retrieve images based on the query
-        # Return a list of image URLs
-        # Example implementation using ScraperAPI and requests library:
-        api_key = "26b90206edb17be57317837cb3980c39"
-        url = f"https://api.scraperapi.com/?api_key={api_key}&url=https://www.pinterest.com/search/pins/?q={query}"
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            images = data.get("images", [])
-            image_urls = [image["url"] for image in images]
-            return image_urls
-        else:
-            return []
-
 def setup(bot):
-    bot.add_cog(PinterestCog(bot))
+    bot.add_cog(PinterestScraper(bot))
