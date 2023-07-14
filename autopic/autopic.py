@@ -27,7 +27,7 @@ class autopic(commands.Cog):
     async def autopic(self, ctx):
         """Automatic picture scraping and posting."""
         if ctx.invoked_subcommand is None:
-            await ctx.send("Invalid subcommand for autopic.")
+            await ctx.send("hello its a me a?.")
 
     @autopic.command(name="start")
     async def start_autopic(self, ctx, *, query: str = "default query"):
