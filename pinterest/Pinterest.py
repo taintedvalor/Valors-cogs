@@ -1,6 +1,6 @@
 import discord
 import asyncio
-from discord.ext import commands, tasks
+from redbot.core import commands
 import requests
 
 class PinterestCog(commands.Cog):
