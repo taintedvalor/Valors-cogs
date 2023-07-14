@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import random
 import asyncio
 
-class ImageScrapingCog(commands.Cog):
+class autopic(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.query = "default query"
@@ -113,4 +113,4 @@ class ImageScrapingCog(commands.Cog):
         return False
 
 def setup(bot):
-    bot.add_cog(ImageScrapingCog(bot))
+    bot.add_cog(autopic(bot))
