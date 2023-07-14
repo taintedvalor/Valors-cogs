@@ -1,50 +1,47 @@
 import discord
-from discord.ext import tasks
 from redbot.core import commands
 import requests
 from bs4 import BeautifulSoup
 import random
 import asyncio
 
-class PinterestCog(commands.Cog):
+class ImageScrapingCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.query = None
-        self.channel_id = None
-        self.interval = 15  # in seconds
-        self.bot.loop.create_task(self.start_searching())
+        self.query = "dog"
+        self.channel_id = 1129537678669529209  # Replace with your desired channel ID
 
     @commands.command()
-    async def pinterest(self, ctx, *, query):
-        """Start searching and displaying Pinterest images."""
+    async def start(self, ctx, *, query: str = "default query"):
         self.query = query
-        self.channel_id = ctx.channel.id
-        await ctx.send(f"Started searching Pinterest for: `{query}`")
+        await ctx.send(f"Image scraping started with query: {self.query}")
+        await self.send_images_periodically()
 
-    async def start_searching(self):
-        await self.bot.wait_until_ready()
-        while not self.bot.is_closed():
-            if self.query and self.channel_id:
-                images = await self.search_pinterest()
-                if images:
-                    for image in images:
-                        await self.send_image_embed(image)
-                        await asyncio.sleep(self.interval)
-            await asyncio.sleep(1)
+    async def send_images_periodically(self):
+        while True:
+            await self.scrape_and_send_image()
+            await asyncio.sleep(15)  # Wait for 15 seconds before sending the next image
 
-    async def search_pinterest(self):
-        url = f"https://www.pinterest.com/search/pins/?q={self.query.replace(' ', '%20')}"
+    async def scrape_and_send_image(self):
+        try:
+            search_results = self.google_search(self.query)
+            image_url = random.choice(search_results)
+            embed = discord.Embed()
+            embed.set_image(url=image_url)
+            
+            channel = self.bot.get_channel(self.channel_id)
+            await channel.send(embed=embed)
+        except Exception as e:
+            print(f"Error scraping and sending image: {e}")
+
+    def google_search(self, query):
+        url = f"https://www.google.com/search?q={query}&tbm=isch"
         response = requests.get(url)
         soup = BeautifulSoup(response.content, "html.parser")
-        image_elements = soup.select(".GrowthUnauthPinImage")
-        image_urls = [element["src"] for element in image_elements]
+
+        image_elements = soup.find_all("img")
+        image_urls = [element["src"] for element in image_elements if element["src"].startswith("http")]
         return image_urls
 
-    async def send_image_embed(self, image_url):
-        channel = self.bot.get_channel(self.channel_id)
-        embed = discord.Embed()
-        embed.set_image(url=image_url)
-        await channel.send(embed=embed)
-
 def setup(bot):
-    bot.add_cog(PinterestCog(bot))
+    bot.add_cog(ImageScrapingCog(bot))
