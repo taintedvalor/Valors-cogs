@@ -19,7 +19,7 @@ class autopic(commands.Cog):
             "channel_id": None,
             "interval": 15,
             "nsfw_words": ["nsfw", "18+", "explicit"],
-            "last_query_nsfw": False
+            "nsfw_confirm": False
         }
 
         self.config.register_guild(**default_guild_settings)
@@ -28,7 +28,7 @@ class autopic(commands.Cog):
     async def autopic(self, ctx):
         """Automatic picture scraping and posting."""
         if ctx.invoked_subcommand is None:
-            await ctx.send("hello its ah me?")
+            await ctx.send("Invalid subcommand for autopic.")
 
     @autopic.command(name="start")
     async def start_autopic(self, ctx, *, query: str = "default query"):
@@ -39,6 +39,7 @@ class autopic(commands.Cog):
         else:
             channel = self.bot.get_channel(self.channel_id)
             await ctx.send(f"Image scraping started with query: {self.query} in channel {channel.mention}.")
+        await self.config.guild(ctx.guild).nsfw_confirm.set(True)
         await self.send_images_periodically(ctx.guild)
 
     @autopic.command(name="setchannel")
@@ -56,6 +57,7 @@ class autopic(commands.Cog):
         self.query = "default query"
         self.channel_id = None
         await ctx.send("Image scraping stopped.")
+        await self.config.guild(ctx.guild).nsfw_confirm.set(False)
         await self.save_guild_settings(ctx.guild)
 
     @autopic.command(name="interval")
@@ -82,10 +84,12 @@ class autopic(commands.Cog):
         guild_settings = await self.config.guild(ctx.guild).all()
         channel = self.bot.get_channel(guild_settings["channel_id"])
         nsfw_words = ", ".join(guild_settings["nsfw_words"])
+        nsfw_confirm = guild_settings["nsfw_confirm"]
         await ctx.send(f"Autopic settings for this guild:\n"
                        f"Channel: {channel.mention if channel else 'Not set'}\n"
                        f"Interval: {guild_settings['interval']} seconds\n"
-                       f"NSFW words: {nsfw_words}")
+                       f"NSFW words: {nsfw_words}\n"
+                       f"NSFW confirmation: {'Enabled' if nsfw_confirm else 'Disabled'}")
 
     async def send_images_periodically(self, guild):
         while True:
@@ -99,18 +103,12 @@ class autopic(commands.Cog):
             embed = discord.Embed()
             embed.set_image(url=image_url)
 
-            channel_id = await self.config.guild(guild).channel_id()
-            channel = self.bot.get_channel(channel_id)
-            last_query_nsfw = await self.config.guild(guild).last_query_nsfw()
-
-            if await self.check_nsfw_words(self.query):
-                if not last_query_nsfw:
-                    await self.send_nsfw_confirmation(channel, embed, guild)
-                else:
-                    await asyncio.sleep(self.interval)
+            channel = self.bot.get_channel(self.channel_id)
+            nsfw_confirm = await self.config.guild(guild).nsfw_confirm()
+            if await self.check_nsfw_words(self.query) and nsfw_confirm:
+                await self.send_nsfw_confirmation(channel, embed)
             else:
                 await channel.send(embed=embed)
-                await self.config.guild(guild).last_query_nsfw.set(False)
         except Exception as e:
             print(f"Error scraping and sending image: {e}")
 
@@ -129,7 +127,7 @@ class autopic(commands.Cog):
                 return True
         return False
 
-    async def send_nsfw_confirmation(self, channel, embed, guild):
+    async def send_nsfw_confirmation(self, channel, embed):
         confirmation_message = await channel.send("Are you sure you want to post this image? It may contain NSFW content. Reply with 'yes' to confirm.")
         try:
             def check_author(message):
@@ -140,10 +138,8 @@ class autopic(commands.Cog):
 
             await self.bot.wait_for("message", check=check_content, timeout=self.nsfw_timeout)
             await channel.send(embed=embed)
-            await self.config.guild(guild).last_query_nsfw.set(False)
         except asyncio.TimeoutError:
             await confirmation_message.delete()
-            await self.config.guild(guild).last_query_nsfw.set(True)
 
     async def save_guild_settings(self, guild):
         await self.config.guild(guild).channel_id.set(self.channel_id)
