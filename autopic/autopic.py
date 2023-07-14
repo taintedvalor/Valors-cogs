@@ -74,7 +74,8 @@ class autopic(commands.Cog):
             self.guild_queries[ctx.guild.id] = query
             await ctx.send(f"Query set for this guild: {query}")
         else:
-            await ctx.send("This command can only be used within a guild.")
+            self.query = query
+            await ctx.send(f"Default query set: {query}")
 
     async def send_images_periodically(self):
         while True:
