@@ -3,199 +3,167 @@ from redbot.core import commands
 import random
 import asyncio
 
-class ElectionCog(commands.Cog):
+class Election(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.participant_emojis = {}  # Store participant IDs and their corresponding emojis
-        self.election_channel_id = None
-        self.role_to_inherit_id = None
-        self.previous_winner = None
-        self.election_period = 86400
-        self.participants = {}
-        self.participant_votes = {}
-        self.election_message_id = None
+        self.elections = {}  # Dictionary to store ongoing elections
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print("ElectionCog is ready.")
+    @commands.command()
+    async def election(self, ctx, role: discord.Role, duration: int, channel: discord.TextChannel):
+        """Create an election for a specific role."""
+        guild_id = ctx.guild.id
 
-    @commands.group()
-    async def election(self, ctx):
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
-
-    @election.command(name="setchannel")
-    async def set_election_channel_command(self, ctx, channel: discord.TextChannel):
-        self.election_channel_id = channel.id
-        await ctx.send(f"Election channel set to {channel.mention}.")
-
-    @election.command(name="setrole")
-    async def set_role_to_inherit_command(self, ctx, role: discord.Role):
-        self.role_to_inherit_id = role.id
-        await ctx.send(f"Role to inherit set to {role.mention}.")
-
-    @election.command(name="setperiod")
-    async def set_election_period_command(self, ctx, period: int):
-        if period <= 0:
-            await ctx.send("Invalid election period. Please provide a positive integer value.")
-            return
-        self.election_period = period
-        await ctx.send(f"Election period set to {period} seconds.")
-
-    @election.command(name="start")
-    async def start_election_command(self, ctx):
-        if not all([self.election_channel_id, self.role_to_inherit_id]):
-            await ctx.send("Please configure all necessary variables before starting the election.")
+        if guild_id in self.elections:
+            await ctx.send("An election is already in progress.")
             return
 
-        election_channel = self.bot.get_channel(self.election_channel_id)
-        if election_channel is None:
-            await ctx.send("The configured election channel does not exist.")
+        embed = discord.Embed(
+            title="Election Board",
+            description=f"React with the corresponding emoji to vote for a participant.",
+            color=discord.Color.red()
+        )
+
+        embed.add_field(name="Role", value=role.mention, inline=False)
+        embed.add_field(name="Duration", value=f"{duration} seconds", inline=False)
+        embed.set_footer(text=f"Election initiated by {ctx.author.display_name}")
+
+        message = await channel.send(embed=embed)
+
+        self.elections[guild_id] = {
+            'role': role,
+            'duration': duration,
+            'channel': channel,
+            'message': message.id,
+            'candidates': {}
+        }
+
+        await message.add_reaction("✅")  # Reaction to be used for voting
+
+        await ctx.send(f"Election created for role {role.name}. Voting board has been set in {channel.mention}.")
+
+        await self.election_timer(guild_id)
+
+    async def election_timer(self, guild_id):
+        await asyncio.sleep(self.elections[guild_id]['duration'])
+        if guild_id in self.elections:
+            await self.declare_winner(guild_id)
+
+    async def declare_winner(self, guild_id):
+        guild = self.bot.get_guild(guild_id)
+        election = self.elections[guild_id]
+
+        if not election['candidates']:
+            await election['channel'].send("No participants in the election.")
             return
 
-        await election_channel.purge()
+        winner_id = max(election['candidates'], key=lambda x: election['candidates'][x]['votes'])
+        role = election['role']
 
-        embed = discord.Embed(title="Election", description="React to the corresponding emoji to vote for a participant.")
-        message = await election_channel.send(embed=embed)
-        self.election_message_id = message.id
+        winner_member = guild.get_member(winner_id)
 
-        # Assign unique emoji to each participant and add reactions
-        for participant, emoji in self.participant_emojis.items():
-            self.participant_votes[participant] = {emoji: 0}
-            await message.add_reaction(emoji)
-
-        await self.bot.wait_for('message', check=lambda m: m.channel == election_channel and m.author == ctx.author)
-        await self.process_election_results(message)
-
-    async def process_election_results(self, message):
-        await message.clear_reactions()
-        self.participant_votes = {participant: {emoji: 0} for participant, emoji in self.participant_emojis.items()}
-
-        for reaction in message.reactions:
-            if reaction.emoji in self.participant_emojis.values():
-                async for user in reaction.users():
-                    if user != self.bot.user and user.id in self.participant_emojis:
-                        emoji = self.participant_emojis[user.id]
-                        if emoji in self.participant_votes[user]:
-                            self.participant_votes[user][emoji] += 1
-
-        embed = discord.Embed(title="Election Results", description="Here are the election results:")
-        for participant, emoji_votes in self.participant_votes.items():
-            votes = sum(emoji_votes.values())
-            embed.add_field(name=participant.name, value=f"{participant.mention} - Votes: {votes}", inline=False)
-
-        winners = []
-        max_votes = 0
-        for participant, emoji_votes in self.participant_votes.items():
-            votes = sum(emoji_votes.values())
-            if votes > max_votes:
-                winners = [participant]
-                max_votes = votes
-            elif votes == max_votes:
-                winners.append(participant)
-
-        if winners:
-            winner = random.choice(winners)
-            embed.set_footer(text=f"The winner is {winner.name} with {max_votes} votes!")
-        else:
-            winner = None
-
-        election_channel = self.bot.get_channel(self.election_channel_id)
-        await election_channel.send(embed=embed)
-
-        if winner:
-            await self.bot.wait_until_ready()
-            await self.handle_election_result(winner)
-
-    async def handle_election_result(self, winner):
-        election_channel = self.bot.get_channel(self.election_channel_id)
-        role_to_inherit = election_channel.guild.get_role(self.role_to_inherit_id)
-
-        if not role_to_inherit:
-            await election_channel.send("The role to inherit does not exist.")
+        if winner_member is None:
+            await election['channel'].send("The winner is no longer a member of the server.")
             return
 
-        if winner == role_to_inherit:
-            await election_channel.send("The role to inherit cannot be the winner.")
-            return
+        await winner_member.add_roles(role, reason="Winner of the election")
 
-        if winner:
-            await election_channel.send(f"The winner is {winner.mention}!")
+        remove_role = True  # Set to True if all non-winners should be removed from the role
 
-            if self.previous_winner:
-                await self.previous_winner.remove_roles(role_to_inherit)
-                await election_channel.send(f"{self.previous_winner.mention} no longer holds the role to inherit.")
+        if remove_role:
+            for candidate_id in election['candidates']:
+                if candidate_id != winner_id:
+                    candidate_member = guild.get_member(candidate_id)
+                    if candidate_member is not None:
+                        await candidate_member.remove_roles(role)
 
-            await winner.add_roles(role_to_inherit)
-            await election_channel.send(f"{winner.mention} has received the role to inherit.")
-            await asyncio.sleep(self.election_period)
-            await winner.remove_roles(role_to_inherit)
-            await election_channel.send(f"{winner.mention} no longer holds the role to inherit.")
+        embed = discord.Embed(
+            title="Election Board",
+            description=f"The winner of the election is {winner_member.display_name}!",
+            color=discord.Color.green()
+        )
 
-            self.previous_winner = winner
-        else:
-            await election_channel.send("No one received enough votes in the election.")
+        embed.add_field(name="Role", value=role.mention, inline=False)
+        embed.add_field(name="Duration", value=f"{election['duration']} seconds", inline=False)
 
-    @election.command(name="join")
-    async def join_election_command(self, ctx, emoji: str):
-        if len(emoji) > 1:
-            await ctx.send("Invalid emoji. Please provide a single character emoji.")
-            return
-
-        if ctx.author not in self.participants:
-            self.participants[ctx.author] = emoji
-            self.participant_emojis[ctx.author] = emoji
-            self.participant_votes[ctx.author] = {emoji: 0}
-            await ctx.send(f"{ctx.author.mention} has joined the election with the emoji {emoji}.")
-            await self.update_election_embed()
-        else:
-            await ctx.send(f"{ctx.author.mention} is already part of the election.")
-
-    async def update_election_embed(self):
-        election_channel = self.bot.get_channel(self.election_channel_id)
-        message = await election_channel.fetch_message(self.election_message_id)
-
-        embed = message.embeds[0]
-        embed.clear_fields()
-        embed.description = "React to the corresponding emoji to vote for a participant."
-        for participant, emoji_votes in self.participant_votes.items():
-            votes = sum(emoji_votes.values())
-            embed.add_field(name=participant.name, value=f"{participant.mention} - Votes: {votes}", inline=False)
+        message = await election['channel'].fetch_message(election['message'])
         await message.edit(embed=embed)
+
+        del self.elections[guild_id]
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        if payload.user_id != self.bot.user.id and payload.message_id == self.election_message_id:
-            guild = self.bot.get_guild(payload.guild_id)
-            user = guild.get_member(payload.user_id)
-            if user and user != self.bot.user and user.id in self.participant_emojis:
-                emoji = payload.emoji.name
-                if emoji == self.participant_emojis[user.id]:
-                    self.participant_votes[user][emoji] += 1
-                    await self.update_election_embed()
+        if not payload.member.bot:
+            guild_id = payload.guild_id
+            election = self.elections.get(guild_id)
 
-    @commands.Cog.listener()
-    async def on_raw_reaction_remove(self, payload):
-        if payload.user_id != self.bot.user.id and payload.message_id == self.election_message_id:
-            guild = self.bot.get_guild(payload.guild_id)
-            user = guild.get_member(payload.user_id)
-            if user and user != self.bot.user and user.id in self.participant_emojis:
-                emoji = payload.emoji.name
-                if emoji == self.participant_emojis[user.id]:
-                    self.participant_votes[user][emoji] -= 1
-                    await self.update_election_embed()
+            if election is None:
+                return
 
-    @election.command(name="settings")
-    async def settings_command(self, ctx):
-        election_channel = self.bot.get_channel(self.election_channel_id)
-        role_to_inherit = ctx.guild.get_role(self.role_to_inherit_id)
+            channel = self.bot.get_channel(payload.channel_id)
 
-        embed = discord.Embed(title="Election Settings", color=discord.Color.blue())
-        embed.add_field(name="Election Channel", value=election_channel.mention if election_channel else "Not set")
-        embed.add_field(name="Role to Inherit", value=role_to_inherit.mention if role_to_inherit else "Not set")
-        embed.add_field(name="Election Period", value=f"{self.election_period} seconds")
+            if channel is None or channel.id != election['channel'].id:
+                return
 
-        await ctx.send(embed=embed)
+            message = await channel.fetch_message(payload.message_id)
+
+            if message.id != election['message']:
+                return
+
+            reaction = discord.utils.get(message.reactions, emoji=payload.emoji.name)
+
+            if reaction is not None and reaction.count > 1:
+                candidate_id = str(payload.user_id)
+
+                if candidate_id not in election['candidates']:
+                    election['candidates'][candidate_id] = {
+                        'votes': reaction.count - 1,
+                        'emoji': str(payload.emoji)
+                    }
+                else:
+                    election['candidates'][candidate_id]['votes'] = reaction.count - 1
+
+    @commands.command()
+    async def election_status(self, ctx):
+        """Display the current status of the ongoing election."""
+        guild_id = ctx.guild.id
+
+        if guild_id not in self.elections:
+            await ctx.send("There is no ongoing election.")
+            return
+
+        election = self.elections[guild_id]
+
+        embed = discord.Embed(
+            title="Election Status",
+            description="Current status of the ongoing election.",
+            color=discord.Color.blue()
+        )
+
+        embed.add_field(name="Role", value=election['role'].mention, inline=False)
+        embed.add_field(name="Duration", value=f"{election['duration']} seconds", inline=False)
+        embed.add_field(name="Participants", value=len(election['candidates']), inline=False)
+
+        if election['candidates']:
+            candidates_info = '\n'.join([
+                f"{election['candidates'][c]['emoji']} - {ctx.guild.get_member(int(c)).mention}"
+                for c in election['candidates']
+            ])
+            embed.add_field(name="Participants List", value=candidates_info, inline=False)
+
+        message = await election['channel'].fetch_message(election['message'])
+        await message.edit(embed=embed)
+
+    @commands.command()
+    async def cancel_election(self, ctx):
+        """Cancel the ongoing election."""
+        guild_id = ctx.guild.id
+
+        if guild_id not in self.elections:
+            await ctx.send("There is no ongoing election.")
+            return
+
+        del self.elections[guild_id]
+        await ctx.send("The ongoing election has been canceled.")
 
 def setup(bot):
-    bot.add_cog(ElectionCog(bot))
+    bot.add_cog(Election(bot))
