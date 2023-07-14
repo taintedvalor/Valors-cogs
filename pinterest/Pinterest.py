@@ -1,12 +1,14 @@
 import discord
 import asyncio
 from redbot.core import commands
+from redbot.core import tasks
 import requests
 
 class PinterestCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.query = ""
+        self.channel_id = None
         self.send_images.start()
 
     def cog_unload(self):
@@ -18,13 +20,20 @@ class PinterestCog(commands.Cog):
         self.query = query
         await ctx.send(f"Query set to: {query}")
 
+    @commands.command()
+    async def setchannel(self, ctx, channel: discord.TextChannel):
+        """Set the channel for receiving Pinterest images."""
+        self.channel_id = channel.id
+        await ctx.send(f"Channel set to: {channel.mention}")
+
     @tasks.loop(seconds=15.0)
     async def send_images(self):
-        if self.query:
+        if self.query and self.channel_id:
             images = self.get_pinterest_images(self.query)
-            channel = self.bot.get_channel(YOUR_CHANNEL_ID)
-            for image in images:
-                await channel.send(image)
+            channel = self.bot.get_channel(self.channel_id)
+            if channel:
+                for image in images:
+                    await channel.send(image)
 
     @send_images.before_loop
     async def before_send_images(self):
