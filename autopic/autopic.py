@@ -95,9 +95,11 @@ class autopic(commands.Cog):
         try:
             search_results = self.google_search(self.query)
             image_url = random.choice(search_results)
+            original_post_url = self.get_original_post_url(image_url)
             embed = discord.Embed()
             embed.set_image(url=image_url)
-
+            embed.description = f"[View Original Post]({original_post_url})"
+            
             channel = self.bot.get_channel(self.channel_id)
             if await self.check_nsfw_words(self.query):
                 await self.send_nsfw_confirmation(channel, embed)
@@ -134,6 +136,11 @@ class autopic(commands.Cog):
             await channel.send(embed=embed)
         except asyncio.TimeoutError:
             await confirmation_message.delete()
+
+    def get_original_post_url(self, image_url):
+        if "googleusercontent" in image_url:
+            return None
+        return image_url
 
     async def save_guild_settings(self, guild):
         await self.config.guild(guild).channel_id.set(self.channel_id)
