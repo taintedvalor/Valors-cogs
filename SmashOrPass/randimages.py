@@ -13,6 +13,7 @@ class SmashOrPass(commands.Cog):
         self.rounds = 0
         self.answers = {}
         self.image_cog = Core(bot)  # Instantiate the Core class for image fetching
+        self.ctx = None  # Save the ctx object for later use
 
     @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
@@ -22,6 +23,8 @@ class SmashOrPass(commands.Cog):
         if self.rounds >= 10:
             await ctx.send("The game has already ended.")
             return
+
+        self.ctx = ctx  # Save the ctx object
 
         # Fetch a random wallpaper image from subreddits
         image_url = await self.fetch_random_wallpaper()
@@ -34,7 +37,11 @@ class SmashOrPass(commands.Cog):
         await message.add_reaction("⛔")
 
         def check(reaction, user):
-            return user == ctx.author and reaction.message.id == message.id and str(reaction.emoji) in ["❤️", "⛔"]
+            return (
+                user == ctx.author
+                and reaction.message.id == message.id
+                and str(reaction.emoji) in ["❤️", "⛔"]
+            )
 
         try:
             reaction, _ = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
@@ -49,7 +56,7 @@ class SmashOrPass(commands.Cog):
 
         # End the game after 10 rounds
         if self.rounds == 10:
-            await self.display_results(ctx)
+            await self.display_results()
             self.rounds = 0
             self.answers = {}
 
@@ -65,18 +72,18 @@ class SmashOrPass(commands.Cog):
         )
         return image_url
 
-    async def display_results(self, ctx):
+    async def display_results(self):
         # Create an embed with the game results
         embed = discord.Embed(title="Smash or Pass Results", description="Here are the results of the game:")
 
         for user_id, answer in self.answers.items():
-            user = ctx.guild.get_member(user_id)
+            user = self.ctx.guild.get_member(user_id)
             if user:
                 embed.add_field(name=user.display_name, value=answer, inline=False)
             else:
                 embed.add_field(name="Unknown User", value=answer, inline=False)
 
-        await ctx.send(embed=embed)
+        await self.ctx.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(SmashOrPass(bot))
