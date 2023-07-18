@@ -1,5 +1,5 @@
 import discord
-from redbot.core import commands as red_commands
+from redbot.core import checks, commands
 from redbot.core.i18n import Translator, cog_i18n
 
 from .core import Core
@@ -7,14 +7,14 @@ from . import constants as sub
 
 _ = Translator("Image", __file__)
 
-class SmashOrPass(red_commands.Cog):
+class SmashOrPass(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.rounds = 0
         self.answers = {}
         self.image_cog = Core(bot)  # Instantiate the Core class for image fetching
 
-    @red_commands.cooldown(1, 5, red_commands.BucketType.user)
+    @commands.cooldown(1, 5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     @commands.command()
     async def smashorpass(self, ctx):
@@ -80,4 +80,3 @@ class SmashOrPass(red_commands.Cog):
 
 def setup(bot):
     bot.add_cog(SmashOrPass(bot))
-
