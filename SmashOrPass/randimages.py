@@ -1,5 +1,5 @@
 import discord
-from redbot.core import checks, commands
+from redbot.core import commands as red_commands
 from redbot.core.i18n import Translator, cog_i18n
 
 from .core import Core
