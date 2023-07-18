@@ -1,9 +1,11 @@
 import discord
-from discord.ext import commands
-from redbot.core import commands as red_commands
+from redbot.core import checks, commands
+from redbot.core.i18n import Translator, cog_i18n
 
 from .core import Core
 from . import constants as sub
+
+_ = Translator("Image", __file__)
 
 class SmashOrPass(red_commands.Cog):
     def __init__(self, bot):
@@ -78,3 +80,4 @@ class SmashOrPass(red_commands.Cog):
 
 def setup(bot):
     bot.add_cog(SmashOrPass(bot))
+
