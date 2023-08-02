@@ -34,7 +34,7 @@ class MMedia(commands.Cog):
             ignored_entities.append(entity.id)
         await ctx.send(f"{entity.mention} added to the ignore list.")
 
-    @tasks.loop(seconds=10)
+    @tasks.loop(seconds=2)
     async def image_check(self):
         for guild in self.bot.guilds:
             designated_channel = await self.config.guild(guild).designated_channel()
