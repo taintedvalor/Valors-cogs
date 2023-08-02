@@ -131,7 +131,6 @@ class Jailer(commands.Cog):
         await self.update_channel_permissions(ctx.guild, jail_role, jail_channel)
         await ctx.send(f"{member.display_name} has been jailed.")
         await jail_channel.send(f"{member.display_name} has been jailed.")
-        await self.config.guild(ctx.guild).original_roles.set_raw(member.id, value=self.original_roles[member.id])
 
     @jailer.command(name="unjail")
     async def unjail_member(self, ctx, member: discord.Member):
@@ -173,11 +172,8 @@ class Jailer(commands.Cog):
         for channel in guild.channels:
             if channel != jail_channel:
                 await channel.set_permissions(jail_role, read_messages=False, send_messages=False)
-                await self.config.guild(ctx.guild).original_roles.set_raw(member.id, value=self.original_roles[member.id])
 
-   async def cog_unload(self):
-        # Save all the cog data to the database upon cog unload
-        await self.config.clear_all()
 
 def setup(bot):
     bot.add_cog(Jailer(bot))
+
