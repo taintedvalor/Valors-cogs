@@ -1,6 +1,7 @@
 import discord
 from redbot.core import commands, Config
 from discord.ext import tasks
+from io import BytesIO
 
 class mmedia(commands.Cog):
     def __init__(self, bot):
@@ -69,16 +70,28 @@ class mmedia(commands.Cog):
                 async for message in channel.history(limit=1):
                     if (
                         message.attachments
-                        and not message.content
                         and message.author.id not in ignored_entities
                         and not any(role.id in ignored_entities for role in message.author.roles)
                     ):
                         original_poster = message.author.mention
+                        text_content = message.content
+                        image_url = message.attachments[0].url
                         await message.delete()
-                        await destination_channel.send(
-                            f"{original_poster}, your media has been moved here:\n{message.attachments[0].url}"
-                        )
+                        await self.move_media_with_text(destination_channel, original_poster, text_content, image_url)
                         break
+
+    async def move_media_with_text(self, destination_channel, original_poster, text_content, image_url):
+        async with self.bot.session.get(image_url) as response:
+            if response.status != 200:
+                return
+
+            image_bytes = await response.read()
+
+        img = BytesIO(image_bytes)
+        filename = image_url.split("/")[-1]
+        media_with_text = f"{original_poster}\n{text_content}" if text_content else original_poster
+
+        await destination_channel.send(content=media_with_text, file=discord.File(img, filename=filename))
 
 def setup(bot):
     bot.add_cog(mmedia(bot))
