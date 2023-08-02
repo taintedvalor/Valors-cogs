@@ -1,5 +1,5 @@
-from .MMedia import MMedia
+from .MMedia import mmedia
 
 
 async def setup(bot):
-    await bot.add_cog(MMedia(bot))
+    await bot.add_cog(mmedia(bot))
