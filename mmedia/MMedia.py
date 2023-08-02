@@ -22,7 +22,7 @@ class MMedia(commands.Cog):
         pass
 
     @MMedia.command()
-    async def setchannel(self, ctx, channel: discord.TextChannel):
+    async def set_channel(self, ctx, channel: discord.TextChannel):
         """Set the designated channel for moving media."""
         await self.config.guild(ctx.guild).designated_channel.set(channel.id)
         await ctx.send(f"Designated channel set to {channel.mention}.")
@@ -60,11 +60,8 @@ class MMedia(commands.Cog):
 
                         await message.delete()
 
-                        # Mention the original poster in the designated channel
-                        await destination_channel.send(f"{original_poster}, your media has been moved here:\n{media_url}")
-
-                        # Inform the original poster about the media being moved
-                        await message.author.send(f"{original_poster}, your media has been moved to the designated channel.")
+                        # Remove the original image and post a message in the offending channel
+                        await channel.send(f"{original_poster}, your media has been moved to {destination_channel.mention}:\n{media_url}")
                         break
 
 def setup(bot):
