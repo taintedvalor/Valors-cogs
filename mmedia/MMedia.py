@@ -17,7 +17,7 @@ class MMedia(commands.Cog):
         self.image_check.cancel()
 
     @commands.group()
-    async def mmedia(self, ctx):
+    async def MMedia(self, ctx):
         """Manage MMedia cog settings."""
         pass
 
