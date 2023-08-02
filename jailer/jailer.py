@@ -1,97 +1,178 @@
-import discord
 from redbot.core import commands, Config
-from discord.ext import tasks
-from io import BytesIO
+import discord
 
-class MMedia(commands.Cog):
+
+class Jailer(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=959327177)
-        default_guild_settings = {
-            "designated_channel": None,
-            "ignored_entities": []  # A list to store both users and roles to be ignored
-        }
-        self.config.register_guild(**default_guild_settings)
-        self.image_check.start()
-
-    def cog_unload(self):
-        self.image_check.cancel()
-
-    def has_higher_permission():
-        async def predicate(ctx):
-            if ctx.guild is None:
-                return False
-            return ctx.author.guild_permissions.manage_guild
-
-        return commands.check(predicate)
+        self.config = Config.get_conf(self, identifier=1234567890)  # Replace with a unique identifier
+        self.config.register_guild(jail_role=None, jail_channel=None)
+        self.original_roles = {}
 
     @commands.group()
-    async def MMedia(self, ctx):
-        """Manage MMedia cog settings."""
+    @commands.has_permissions(manage_roles=True)
+    async def jailer(self, ctx):
+        """Commands for jail management."""
         pass
 
-    @MMedia.command()
-    @has_higher_permission()
-    async def set_channel(self, ctx, channel: discord.TextChannel):
-        """Set the designated channel for moving media."""
-        await self.config.guild(ctx.guild).designated_channel.set(channel.id)
-        await ctx.send(f"Designated channel set to {channel.mention}.")
+    @jailer.command(name="configjailrole")
+    async def config_jail_role(self, ctx, role: discord.Role):
+        """Configures the jail role."""
+        guild = ctx.guild
+        jail_role_id = role.id
+        jail_channel_id = await self.config.guild(guild).jail_channel()
 
-    @MMedia.command()
-    @has_higher_permission()
-    async def ignore(self, ctx, entity: discord.User or discord.Role):
-        """Add a user or role to the ignore list."""
-        async with self.config.guild(ctx.guild).ignored_entities() as ignored_entities:
-            ignored_entities.append(entity.id)
-        await ctx.send(f"{entity.mention} added to the ignore list.")
+        if not jail_channel_id:
+            await ctx.send("Jail channel is not configured for this guild.")
+            return
 
-    @MMedia.command()
-    @has_higher_permission()
-    async def unignore(self, ctx, entity: discord.User or discord.Role):
-        """Remove a user or role from the ignore list."""
-        async with self.config.guild(ctx.guild).ignored_entities() as ignored_entities:
-            ignored_entities.remove(entity.id)
-        await ctx.send(f"{entity.mention} removed from the ignore list.")
+        jail_role = guild.get_role(jail_role_id)
+        jail_channel = guild.get_channel(jail_channel_id)
 
-    @tasks.loop(seconds=10)
-    async def image_check(self):
-        for guild in self.bot.guilds:
-            designated_channel = await self.config.guild(guild).designated_channel()
-            if not designated_channel:
-                continue
+        if not jail_role:
+            await ctx.send("Jail role not found.")
+            return
 
-            ignored_entities = await self.config.guild(guild).ignored_entities()
-            destination_channel = guild.get_channel(designated_channel)
+        if not jail_channel:
+            await ctx.send("Jail channel not found.")
+            return
 
-            for channel in guild.text_channels:
-                if channel.id == designated_channel:
-                    continue
+        # Set permissions for jail role in jail channel
+        await jail_channel.set_permissions(jail_role, read_messages=True, send_messages=True)
+        await self.update_channel_permissions(guild, jail_role, jail_channel)
 
-                async for message in channel.history(limit=1):
-                    if (
-                        message.attachments
-                        and message.author.id not in ignored_entities
-                        and not any(role.id in ignored_entities for role in message.author.roles)
-                    ):
-                        original_poster = message.author.mention
-                        text_content = message.content
-                        image_url = message.attachments[0].url
-                        await message.delete()
-                        await self.move_media_with_text(destination_channel, original_poster, text_content, image_url)
-                        break
+        # Remove all roles from users with the jail role
+        for member in guild.members:
+            if jail_role in member.roles:
+                await member.remove_roles(jail_role)
 
-    async def move_media_with_text(self, destination_channel, original_poster, text_content, image_url):
-        async with self.bot.session.get(image_url) as response:
-            if response.status != 200:
+        await ctx.send(f"Jail role configured as {role.name}.")
+
+    @jailer.command(name="configjailchannel")
+    async def config_jail_channel(self, ctx, channel: discord.TextChannel):
+        """Configures the jail channel."""
+        guild = ctx.guild
+        jail_channel_id = channel.id
+        jail_role_id = await self.config.guild(guild).jail_role()
+
+        if not jail_role_id:
+            await ctx.send("Jail role is not configured for this guild.")
+            return
+
+        jail_role = guild.get_role(jail_role_id)
+        jail_channel = guild.get_channel(jail_channel_id)
+
+        if not jail_role:
+            await ctx.send("Jail role not found.")
+            return
+
+        if not jail_channel:
+            await ctx.send("Jail channel not found.")
+            return
+
+        # Set permissions for jail role in jail channel
+        await jail_channel.set_permissions(jail_role, read_messages=True, send_messages=True)
+        await self.update_channel_permissions(guild, jail_role, jail_channel)
+        await ctx.send(f"Jail channel configured as {channel.mention}.")
+
+    @jailer.command(name="settings")
+    async def jailer_settings(self, ctx):
+        """Shows the jailer settings for the guild."""
+        guild_config = self.config.guild(ctx.guild)
+        jail_role_id = await guild_config.jail_role()
+        jail_channel_id = await guild_config.jail_channel()
+
+        if jail_role_id:
+            jail_role = ctx.guild.get_role(jail_role_id)
+            if not jail_role:
+                await ctx.send("Jail role not found.")
                 return
+            await ctx.send(f"Jail role: {jail_role.name}")
+        else:
+            await ctx.send("Jail role is not configured for this guild.")
 
-            image_bytes = await response.read()
+        if jail_channel_id:
+            jail_channel = ctx.guild.get_channel(jail_channel_id)
+            if not jail_channel:
+                await ctx.send("Jail channel not found.")
+                return
+            await ctx.send(f"Jail channel: {jail_channel.mention}")
+        else:
+            await ctx.send("Jail channel is not configured for this guild.")
 
-        img = BytesIO(image_bytes)
-        filename = image_url.split("/")[-1]
-        media_with_text = f"{original_poster}\n{text_content}" if text_content else original_poster
+    @jailer.command(name="jail")
+    async def jail_member(self, ctx, member: discord.Member):
+        """Jails a member."""
+        guild_config = self.config.guild(ctx.guild)
+        jail_role_id = await guild_config.jail_role()
+        jail_channel_id = await guild_config.jail_channel()
 
-        await destination_channel.send(content=media_with_text, file=discord.File(img, filename=filename))
+        if not jail_role_id:
+            await ctx.send("Jail role is not configured for this guild.")
+            return
+
+        if not jail_channel_id:
+            await ctx.send("Jail channel is not configured for this guild.")
+            return
+
+        jail_role = ctx.guild.get_role(jail_role_id)
+        if not jail_role:
+            await ctx.send("Jail role not found.")
+            return
+
+        jail_channel = ctx.guild.get_channel(jail_channel_id)
+        if not jail_channel:
+            await ctx.send("Jail channel not found.")
+            return
+
+        self.original_roles[member.id] = member.roles[1:]  # Exclude @everyone role
+        await member.remove_roles(*self.original_roles[member.id])
+        await member.add_roles(jail_role)
+        await self.update_channel_permissions(ctx.guild, jail_role, jail_channel)
+        await ctx.send(f"{member.display_name} has been jailed.")
+        await jail_channel.send(f"{member.display_name} has been jailed.")
+
+    @jailer.command(name="unjail")
+    async def unjail_member(self, ctx, member: discord.Member):
+        """Unjails a member."""
+        guild_config = self.config.guild(ctx.guild)
+        jail_role_id = await guild_config.jail_role()
+        jail_channel_id = await guild_config.jail_channel()
+
+        if not jail_role_id:
+            await ctx.send("Jail role is not configured for this guild.")
+            return
+
+        if not jail_channel_id:
+            await ctx.send("Jail channel is not configured for this guild.")
+            return
+
+        jail_role = ctx.guild.get_role(jail_role_id)
+        if not jail_role:
+            await ctx.send("Jail role not found.")
+            return
+
+        jail_channel = ctx.guild.get_channel(jail_channel_id)
+        if not jail_channel:
+            await ctx.send("Jail channel not found.")
+            return
+
+        if member.id in self.original_roles:
+            await member.remove_roles(jail_role)
+            await member.add_roles(*self.original_roles[member.id], atomic=True)
+            del self.original_roles[member.id]
+            await self.update_channel_permissions(ctx.guild, jail_role, jail_channel)
+            await ctx.send(f"{member.display_name} has been unjailed.")
+            await jail_channel.send(f"{member.display_name} has been unjailed.")
+        else:
+            await ctx.send(f"{member.display_name} is not currently jailed.")
+
+    async def update_channel_permissions(self, guild, jail_role, jail_channel):
+        """Updates the channel permissions for a jail role."""
+        for channel in guild.channels:
+            if channel != jail_channel:
+                await channel.set_permissions(jail_role, read_messages=False, send_messages=False)
+
 
 def setup(bot):
-    bot.add_cog(MMedia(bot))
+    bot.add_cog(Jailer(bot))
