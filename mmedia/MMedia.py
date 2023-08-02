@@ -2,7 +2,7 @@ import discord
 from redbot.core import commands, Config
 from discord.ext import tasks
 
-class MMedia(commands.Cog):
+class mmedia(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=959327177)
@@ -16,25 +16,43 @@ class MMedia(commands.Cog):
     def cog_unload(self):
         self.image_check.cancel()
 
+    def has_higher_permission():
+        async def predicate(ctx):
+            if ctx.guild is None:
+                return False
+            return ctx.author.guild_permissions.manage_guild
+
+        return commands.check(predicate)
+
     @commands.group()
-    async def MMedia(self, ctx):
-        """Manage MMedia cog settings."""
+    async def mmedia(self, ctx):
+        """Manage mmedia cog settings."""
         pass
 
-    @MMedia.command()
-    async def set_channel(self, ctx, channel: discord.TextChannel):
+    @mmedia.command()
+    @has_higher_permission()
+    async def setchannel(self, ctx, channel: discord.TextChannel):
         """Set the designated channel for moving media."""
         await self.config.guild(ctx.guild).designated_channel.set(channel.id)
         await ctx.send(f"Designated channel set to {channel.mention}.")
 
-    @MMedia.command()
+    @mmedia.command()
+    @has_higher_permission()
     async def ignore(self, ctx, entity: discord.User or discord.Role):
         """Add a user or role to the ignore list."""
         async with self.config.guild(ctx.guild).ignored_entities() as ignored_entities:
             ignored_entities.append(entity.id)
         await ctx.send(f"{entity.mention} added to the ignore list.")
 
-    @tasks.loop(seconds=2)
+    @mmedia.command()
+    @has_higher_permission()
+    async def unignore(self, ctx, entity: discord.User or discord.Role):
+        """Remove a user or role from the ignore list."""
+        async with self.config.guild(ctx.guild).ignored_entities() as ignored_entities:
+            ignored_entities.remove(entity.id)
+        await ctx.send(f"{entity.mention} removed from the ignore list.")
+
+    @tasks.loop(seconds=10)
     async def image_check(self):
         for guild in self.bot.guilds:
             designated_channel = await self.config.guild(guild).designated_channel()
@@ -63,4 +81,4 @@ class MMedia(commands.Cog):
                         break
 
 def setup(bot):
-    bot.add_cog(MMedia(bot))
+    bot.add_cog(mmedia(bot))
