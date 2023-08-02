@@ -178,7 +178,15 @@ class Jailer(commands.Cog):
    
     async def cog_unload(self):
         # Save all the cog data to the database upon cog unload
-        await self.config.clear_all()
+        for guild in self.bot.guilds:
+            await self.config.guild(guild).clear_raw("original_roles")
 
 def setup(bot):
     bot.add_cog(Jailer(bot))
+
+
+
+
+
+
+
