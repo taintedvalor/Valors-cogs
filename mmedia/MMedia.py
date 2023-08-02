@@ -48,7 +48,7 @@ class MMedia(commands.Cog):
                 if channel.id == designated_channel:
                     continue
 
-                async for message in channel.history(limit=50):
+                async for message in channel.history(limit=1):
                     if (
                         message.attachments
                         and not message.content
