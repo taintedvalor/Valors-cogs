@@ -175,18 +175,9 @@ class Jailer(commands.Cog):
                 await channel.set_permissions(jail_role, read_messages=False, send_messages=False)
                 await self.config.guild(ctx.guild).original_roles.set_raw(member.id, value=self.original_roles[member.id])
 
-   
-    async def cog_unload(self):
+   async def cog_unload(self):
         # Save all the cog data to the database upon cog unload
-        for guild in self.bot.guilds:
-            await self.config.guild(guild).clear_raw("original_roles")
+        await self.config.clear_all()
 
 def setup(bot):
     bot.add_cog(Jailer(bot))
-
-
-
-
-
-
-
