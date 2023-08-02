@@ -56,12 +56,10 @@ class MMedia(commands.Cog):
                         and not any(role.id in ignored_entities for role in message.author.roles)
                     ):
                         original_poster = message.author.mention
-                        media_url = message.attachments[0].url
-
                         await message.delete()
-
-                        # Remove the original image and post a message in the offending channel
-                        await channel.send(f"{original_poster}, your media has been moved to {destination_channel.mention}:\n{media_url}")
+                        await destination_channel.send(
+                            f"{original_poster}, your media has been moved here:\n{message.attachments[0].url}"
+                        )
                         break
 
 def setup(bot):
