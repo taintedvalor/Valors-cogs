@@ -21,8 +21,14 @@ class UserDemoteCog(commands.Cog):
     @checks.admin_or_permissions(manage_roles=True)
     async def userdemote_demote(self, ctx, member: discord.Member):
         """Demote a member and restrict their access to every channel."""
+        # Store the member's roles
+        member_roles = member.roles[1:]  # Exclude the everyone role
+
         # Get the "General" channel (you can change this as needed)
         general_channel = discord.utils.get(ctx.guild.text_channels, name="general")
+
+        # Remove all roles from the member (except the everyone role)
+        await member.remove_roles(*member.roles[1:], reason="User Demoted")
 
         # Remove access to all channels
         for channel in ctx.guild.text_channels:
@@ -38,7 +44,31 @@ class UserDemoteCog(commands.Cog):
         )
 
         # Add the member to the restricted members dictionary
-        self.restricted_members[member.id] = ctx.message.created_at.timestamp()
+        self.restricted_members[member.id] = (ctx.message.created_at.timestamp(), member_roles)
+
+    @userdemote_group.command(name="restore")
+    @checks.admin_or_permissions(manage_roles=True)
+    async def userdemote_restore(self, ctx, member: discord.Member):
+        """Restore the member's previous roles and access."""
+        if member.id not in self.restricted_members:
+            return await ctx.send("The member's roles are not stored or have already been restored.")
+
+        timestamp, member_roles = self.restricted_members.pop(member.id)
+        time_diff = ctx.message.created_at.timestamp() - timestamp
+
+        # Check if the time limit has passed
+        if time_diff < self.default_time_limit:
+            # Inform the member about the restriction
+            await member.send(
+                f"You are still under restriction. You can send a message every {self.default_time_limit // 60} minutes."
+            )
+            return
+
+        # Restore the member's roles
+        await member.add_roles(*member_roles, reason="Roles Restored")
+
+        # Inform the member about the restoration
+        await member.send("Your previous roles have been restored. You can now access the channels as before.")
 
     @userdemote_group.command(name="configure")
     @checks.admin_or_permissions(manage_roles=True)
@@ -67,14 +97,14 @@ class UserDemoteCog(commands.Cog):
 
         # Check if the member is restricted
         if message.author.id in self.restricted_members:
-            time_diff = message.created_at.timestamp() - self.restricted_members[message.author.id]
+            time_diff = message.created_at.timestamp() - self.restricted_members[message.author.id][0]
             if time_diff >= self.default_time_limit:
                 # Remove restrictions and allow sending the message
                 self.restricted_members.pop(message.author.id)
             else:
                 # Inform the member about the restriction and delete the message
                 await message.author.send(
-                    f"Your messaging is currently restricted. You can send a message every {self.default_time_limit // 60} minutes."
+                    f"You are still under restriction. You can send a message every {self.default_time_limit // 60} minutes."
                 )
                 await message.delete()
                 return
@@ -85,6 +115,7 @@ class UserDemoteCog(commands.Cog):
                     f"Your message exceeds the character limit of {self.default_message_length} characters."
                 )
             )
+            await message.delete()
 
 def setup(bot):
     bot.add_cog(UserDemoteCog(bot))
