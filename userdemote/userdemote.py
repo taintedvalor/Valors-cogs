@@ -21,6 +21,10 @@ class UserDemoteCog(commands.Cog):
     @checks.admin_or_permissions(manage_roles=True)
     async def userdemote_demote(self, ctx, member: discord.Member):
         """Demote a member and restrict their access to every channel."""
+        # Check if the member is already demoted
+        if member.id in self.restricted_members:
+            return await ctx.send(f"{member.mention} is already demoted.")
+
         # Store the member's roles
         member_roles = member.roles[1:]  # Exclude the everyone role
 
@@ -51,7 +55,7 @@ class UserDemoteCog(commands.Cog):
     async def userdemote_restore(self, ctx, member: discord.Member):
         """Restore the member's previous roles and access."""
         if member.id not in self.restricted_members:
-            return await ctx.send("The member's roles are not stored or have already been restored.")
+            return await ctx.send(f"{member.mention} is not a demoted user or their roles have already been restored.")
 
         timestamp, member_roles = self.restricted_members.pop(member.id)
         time_diff = ctx.message.created_at.timestamp() - timestamp
