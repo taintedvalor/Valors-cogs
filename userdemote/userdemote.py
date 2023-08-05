@@ -32,11 +32,11 @@ class UserDemoteCog(commands.Cog):
 
         # Remove access to all channels
         for channel in ctx.guild.text_channels:
-            await member.remove_roles(channel, reason="User Demoted")
+            await channel.set_permissions(member, read_messages=False, reason="User Demoted")
 
         # Allow access to the "General" channel
         if general_channel:
-            await member.add_roles(general_channel, reason="User Demoted")
+            await general_channel.set_permissions(member, read_messages=True, reason="User Demoted")
 
         # Inform the member about the restriction
         await member.send(
@@ -66,6 +66,10 @@ class UserDemoteCog(commands.Cog):
 
         # Restore the member's roles
         await member.add_roles(*member_roles, reason="Roles Restored")
+
+        # Allow access to all channels
+        for channel in ctx.guild.text_channels:
+            await channel.set_permissions(member, overwrite=None, reason="Roles Restored")
 
         # Inform the member about the restoration
         await member.send("Your previous roles have been restored. You can now access the channels as before.")
@@ -97,17 +101,20 @@ class UserDemoteCog(commands.Cog):
 
         # Check if the member is restricted
         if message.author.id in self.restricted_members:
-            time_diff = message.created_at.timestamp() - self.restricted_members[message.author.id][0]
-            if time_diff >= self.default_time_limit:
-                # Remove restrictions and allow sending the message
-                self.restricted_members.pop(message.author.id)
-            else:
+            timestamp, _ = self.restricted_members[message.author.id]
+            time_diff = message.created_at.timestamp() - timestamp
+
+            # Check if the time limit has passed
+            if time_diff < self.default_time_limit:
                 # Inform the member about the restriction and delete the message
                 await message.author.send(
                     f"You are still under restriction. You can send a message every {self.default_time_limit // 60} minutes."
                 )
                 await message.delete()
                 return
+            else:
+                # Remove restrictions and allow sending the message
+                self.restricted_members.pop(message.author.id)
 
         if not await self.check_message_length(message.content):
             await message.channel.send(
