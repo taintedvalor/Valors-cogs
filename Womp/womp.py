@@ -34,12 +34,17 @@ class Womp(commands.Cog):
             random_amount = random.randint(min_amount, max_amount)
             
             womp_effect = ''.join([
-                f"**{char}**" if i % 2 == 0 else char
-                for i, char in enumerate(" womp" * random_amount)
+                f"**{char}**" if char == "womp" else char
+                for char in " womp" * random_amount
             ])
             
             punctuation = random.choice(['.', '!', '?'])
-            response = f"{womp_effect}{' ' * random_amount}{punctuation}"
+            capitalized_womp_effect = ' '.join([
+                word.capitalize() if i % 2 == 0 else word
+                for i, word in enumerate(womp_effect.split())
+            ])
+            
+            response = f"{capitalized_womp_effect}{punctuation}"
             
             await message.channel.send(response)
 
