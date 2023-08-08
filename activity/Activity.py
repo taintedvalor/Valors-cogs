@@ -7,9 +7,10 @@ class Activity(commands.Cog):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)  # Change the identifier
         default_guild = {
-            "questions": [],  # List of questions
-            "interval": 2,    # Default interval in hours
-            "role": None      # Role to ping
+            "questions": [],      # List of questions
+            "interval": 2,        # Default interval in hours
+            "role": None,         # Role to ping
+            "activity_channel": None  # Channel for activity messages
         }
         self.config.register_guild(**default_guild)
         self.task = self.bot.loop.create_task(self.ask_question_loop())
@@ -80,6 +81,16 @@ class Activity(commands.Cog):
         await self.config.role.set(role.id)
         await ctx.send(f"Question role set to {role.mention}.")
 
+    @activity.command(name="setchannel")
+    async def set_channel(self, ctx, channel: discord.TextChannel = None):
+        """Set the channel for activity messages."""
+        if not channel:
+            await self.config.activity_channel.set(None)
+            await ctx.send("Activity channel has been cleared.")
+        else:
+            await self.config.activity_channel.set(channel.id)
+            await ctx.send(f"Activity messages will be sent in {channel.mention}.")
+
     @activity.command(name="start")
     async def start_activity(self, ctx):
         """Start asking questions at the configured interval."""
@@ -103,9 +114,13 @@ class Activity(commands.Cog):
             if role_id:
                 role = guild.get_role(role_id)
                 if role:
-                    question = random.choice(questions)
-                    embed = discord.Embed(title="Random Question", description=question, color=discord.Color.green())
-                    await role.send(embed=embed)
+                    channel_id = await self.config.activity_channel()
+                    if channel_id:
+                        channel = guild.get_channel(channel_id)
+                        if channel:
+                            question = random.choice(questions)
+                            embed = discord.Embed(title="Random Question", description=question, color=discord.Color.green())
+                            await channel.send(embed=embed)
 
     async def cog_check(self, ctx):
         """Check if the cog is properly set up."""
