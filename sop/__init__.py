@@ -1,5 +1,5 @@
 from redbot.core.bot import Red
-from .nsfw import Nsfw
+from .nsfw import SmashOrPass
 
 __red_end_user_data_statement__ = (
     "This cog does not persistently store data or metadata about users."
@@ -7,5 +7,5 @@ __red_end_user_data_statement__ = (
 
 
 async def setup(bot: Red):
-    cog = Nsfw(bot)
+    cog = SmashOrPass(bot)
     await bot.add_cog(cog)
