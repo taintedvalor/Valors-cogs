@@ -1,7 +1,7 @@
 import discord
 from redbot.core import commands
 import random
-import asyncpraw
+import praw
 
 class SmashOrPass(commands.Cog):
     def __init__(self, bot):
