@@ -26,10 +26,13 @@ class Womp(commands.Cog):
 
         guild_settings = await self.config.guild(message.guild).all()
         if guild_settings["toggle"] and "womp" in message.content.lower():
-            random_amount = random.randint(1, 10)
+            num_womps = message.content.lower().count("womp")
+            min_amount = num_womps
+            max_amount = num_womps + 2  # Adjust as needed
+            random_amount = random.randint(min_amount, max_amount)
             punctuation = random.choice(['.', '!', '?'])
             capitalization = random.choice([str.capitalize, str.upper])
-            randomized_womp = ''.join([capitalization(char) if i % 2 == 0 else char for i, char in enumerate("womp" * random_amount)])
+            randomized_womp = ''.join([capitalization(char) if i % 2 == 0 else char for i, char in enumerate(" womp" * random_amount)])
             
             response = f"{randomized_womp}{' ' * random_amount}{punctuation}"
             await message.channel.send(response)
