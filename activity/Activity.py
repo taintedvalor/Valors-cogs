@@ -110,11 +110,11 @@ class Activity(commands.Cog):
     async def ask_question(self, guild):
         questions = await self.config.questions()
         if questions:
-            role_id = await self.config.role()
+            role_id = await self.config.role(guild)
             if role_id:
                 role = guild.get_role(role_id)
                 if role:
-                    channel_id = await self.config.activity_channel()
+                    channel_id = await self.config.activity_channel(guild)
                     if channel_id:
                         channel = guild.get_channel(channel_id)
                         if channel:
@@ -124,10 +124,10 @@ class Activity(commands.Cog):
 
     async def cog_check(self, ctx):
         """Check if the cog is properly set up."""
-        return await self.config.role() is not None
+        return await self.config.role(ctx.guild) is not None
 
     async def get_role_mention(self, guild):
-        role_id = await self.config.role()
+        role_id = await self.config.role(guild)
         if role_id:
             role = guild.get_role(role_id)
             if role:
