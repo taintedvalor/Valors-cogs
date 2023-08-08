@@ -1,13 +1,17 @@
 import discord
 from redbot.core import commands
 import random
-import praw
+import asyncpraw
 
 class SmashOrPass(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.games = {}
-        self.reddit = praw.Reddit(
+        self.reddit = None  # Initialize later in on_ready()
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.reddit = asyncpraw.Reddit(
             client_id='BRjqCTnhB_76_ucTXV4J9A',
             client_secret='8lU5K417dv97YjqZ1VBqgxwQVEIoFw',
             user_agent='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
@@ -24,7 +28,7 @@ class SmashOrPass(commands.Cog):
             await ctx.send("This command can only be used in NSFW channels.")
             return
 
-        images = self.get_images_from_reddit(term, num_rounds)  # Implement this function
+        images = await self.get_images_from_reddit(term, num_rounds)  # Implement this function
         if not images:
             await ctx.send("No images found.")
             return
@@ -64,13 +68,16 @@ class SmashOrPass(commands.Cog):
         # Clean up
         del self.games[ctx.channel.id]
 
-    def get_images_from_reddit(self, term, num_images):
-        subreddit = self.reddit.subreddit('all')  # You can change to a specific subreddit
+    async def get_images_from_reddit(self, term, num_images):
+        subreddit = await self.reddit.subreddit('all')  # You can change to a specific subreddit
         images = []
-        for submission in subreddit.search(query=term, sort='top', limit=num_images):
+        async for submission in subreddit.search(query=term, sort='top', limit=num_images):
             if submission.url.endswith(('.jpg', '.jpeg', '.png', '.gif')):
                 images.append(submission.url)
         return images
+
+def setup(bot):
+    bot.add_cog(SmashOrPass(bot))
 
 def setup(bot):
     bot.add_cog(SmashOrPass(bot))
