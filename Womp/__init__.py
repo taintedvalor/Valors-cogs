@@ -1,4 +1,4 @@
-from .Womp import Womp
+from .womp import Womp
 
 
 async def setup(bot):
