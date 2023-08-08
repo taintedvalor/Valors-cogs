@@ -110,24 +110,33 @@ class Activity(commands.Cog):
     async def ask_question(self, guild):
         questions = await self.config.questions()
         if questions:
-            role_id = await self.config.role(guild)
-            if role_id:
-                role = guild.get_role(role_id)
-                if role:
-                    channel_id = await self.config.activity_channel(guild)
-                    if channel_id:
-                        channel = guild.get_channel(channel_id)
-                        if channel:
-                            question = random.choice(questions)
-                            embed = discord.Embed(title="Random Question", description=question, color=discord.Color.green())
-                            await channel.send(embed=embed)
+            if await self.cog_check_role(guild) and await self.cog_check_channel(guild):
+                role_id = await self.config.role(guild)
+                if role_id:
+                    role = guild.get_role(role_id)
+                    if role:
+                        channel_id = await self.config.activity_channel(guild)
+                        if channel_id:
+                            channel = guild.get_channel(channel_id)
+                            if channel:
+                                question = random.choice(questions)
+                                embed = discord.Embed(title="Random Question", description=question, color=discord.Color.green())
+                                await channel.send(embed=embed)
+
+    async def cog_check_role(self, guild):
+        role_id = await self.config.guild(guild).role()
+        return role_id is not None
+
+    async def cog_check_channel(self, guild):
+        channel_id = await self.config.guild(guild).activity_channel()
+        return channel_id is not None
 
     async def cog_check(self, ctx):
         """Check if the cog is properly set up."""
-        return await self.config.role(ctx.guild) is not None
+        return await self.cog_check_role(ctx.guild) and await self.cog_check_channel(ctx.guild)
 
     async def get_role_mention(self, guild):
-        role_id = await self.config.role(guild)
+        role_id = await self.config.guild(guild).role()
         if role_id:
             role = guild.get_role(role_id)
             if role:
