@@ -15,7 +15,9 @@ class Engagement(commands.Cog):
             "role": None,
             "interval": 3,  # Default interval is 3 hours
             "channel": None,
-            "active": False
+            "active": False,
+            "embed_active": False,
+            "embed_color": None
         }
         
         self.config.register_guild(**default_settings)
@@ -25,6 +27,11 @@ class Engagement(commands.Cog):
     @checks.admin()
     async def activity(self, ctx):
         """Manage server engagement settings."""
+        pass
+    
+    @activity.group(name="embed")
+    async def activity_embed(self, ctx):
+        """Customize and toggle question embeds."""
         pass
     
     @activity.command(name="add")
@@ -89,11 +96,32 @@ class Engagement(commands.Cog):
             question_list = "\n".join(questions)
             await ctx.send(f"Current settings:\nInterval: {interval} hours\nRole: {role.mention}\nQuestions:\n{question_list}")
             
+    @activity_embed.command(name="toggle")
+    async def activity_embed_toggle(self, ctx):
+        """Toggle sending question embeds on/off."""
+        embed_active = await self.config.guild(ctx.guild).embed_active()
+        await self.config.guild(ctx.guild).embed_active.set(not embed_active)
+        if not embed_active:
+            await ctx.send("Question embeds are now on")
+        else:
+            await ctx.send("Question embeds are now off")
+            
+    @activity_embed.command(name="customize")
+    async def activity_embed_customize(self, ctx, color: discord.Color = None):
+        """Customize the color of question embeds."""
+        if color:
+            await self.config.guild(ctx.guild).embed_color.set(color.value)
+            await ctx.send(f"Embed color customized to: {color}")
+        else:
+            await self.config.guild(ctx.guild).embed_color.clear()
+            await ctx.send("Embed color customization cleared")
+            
     async def random_question(self):
         await self.bot.wait_until_ready()
         while True:
             for guild in self.bot.guilds:
                 active = await self.config.guild(guild).active()
+                embed_active = await self.config.guild(guild).embed_active()
                 if active:
                     role_id = await self.config.guild(guild).role()
                     role = guild.get_role(role_id)
@@ -102,8 +130,13 @@ class Engagement(commands.Cog):
                     questions = await self.config.guild(guild).questions()
                     if role and channel and questions:
                         question = random.choice(questions)
-                        embed = discord.Embed(title="Random Question", description=question, color=discord.Color.random())
-                        await channel.send(f"{role.mention}", embed=embed)
+                        if embed_active:
+                            embed_color_value = await self.config.guild(guild).embed_color()
+                            embed_color = discord.Color(embed_color_value) if embed_color_value else discord.Color.random()
+                            embed = discord.Embed(title="Random Question", description=question, color=embed_color)
+                            await channel.send(f"{role.mention}", embed=embed)
+                        else:
+                            await channel.send(f"{role.mention} {question}")
             interval = await self.config.guild(guild).interval()
             await asyncio.sleep(interval * 3600)
 
