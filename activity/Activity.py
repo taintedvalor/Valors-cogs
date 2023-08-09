@@ -38,7 +38,7 @@ class Engagement(commands.Cog):
     
     @activity.command(name="add")
     async def activity_add(self, ctx, *, question: str):
-        """Add a question for server engagement."""
+        """Add or remove a question for server engagement."""
         questions = await self.config.guild(ctx.guild).questions()
         if question not in questions:
             questions.append(question)
@@ -96,7 +96,7 @@ class Engagement(commands.Cog):
             role_id = await self.config.guild(ctx.guild).role()
             role = ctx.guild.get_role(role_id)
             questions = await self.config.guild(ctx.guild).questions()
-            question_list = "\n".join(questions)
+            question_list = "\n".join(questions) if questions else "No questions added"
             await ctx.send(f"Current settings:\nInterval: {interval} hours\nRole: {role.mention}\nQuestions:\n{question_list}")
             
     @activity_embed.command(name="toggle")
