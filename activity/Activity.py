@@ -2,6 +2,7 @@ import discord
 from redbot.core import commands, Config, checks
 import random
 import asyncio
+import datetime
 
 class Engagement(commands.Cog):
     """Server engagement with random questions."""
@@ -17,7 +18,8 @@ class Engagement(commands.Cog):
             "channel": None,
             "active": False,
             "embed_active": False,
-            "embed_color": None
+            "embed_color": None,
+            "last_post_time": None
         }
         
         self.config.register_guild(**default_settings)
@@ -57,6 +59,7 @@ class Engagement(commands.Cog):
     async def activity_interval(self, ctx, hours: int):
         """Set the interval for sending questions (in hours)."""
         await self.config.guild(ctx.guild).interval.set(hours)
+        await self.config.guild(ctx.guild).last_post_time.clear()
         await ctx.send(f"Question interval set to: {hours} hours")
         self.question_task.cancel()
         self.question_task = self.bot.loop.create_task(self.random_question())
@@ -116,6 +119,37 @@ class Engagement(commands.Cog):
             await self.config.guild(ctx.guild).embed_color.clear()
             await ctx.send("Embed color customization cleared")
             
+    @commands.command(name="timeleft")
+    async def time_left(self, ctx):
+        """Check the time left for the next question post."""
+        last_post_time = await self.config.guild(ctx.guild).last_post_time()
+        interval = await self.config.guild(ctx.guild).interval()
+        if last_post_time is None:
+            await ctx.send("No question posted yet.")
+        else:
+            now = datetime.datetime.now()
+            time_diff = (last_post_time + datetime.timedelta(hours=interval)) - now
+            hours, remainder = divmod(time_diff.seconds, 3600)
+            minutes = remainder // 60
+            seconds = remainder % 60
+            await ctx.send(f"Time left for next question post: {hours} hours, {minutes} minutes, {seconds} seconds")
+            
+    @commands.command(name="forcepost")
+    async def force_post(self, ctx):
+        """Forcefully send a question post."""
+        last_post_time = await self.config.guild(ctx.guild).last_post_time()
+        now = datetime.datetime.now()
+        interval = await self.config.guild(ctx.guild).interval()
+        if last_post_time is None or (last_post_time + datetime.timedelta(hours=interval)) <= now:
+            await self.send_random_question(ctx.guild)
+            await ctx.send("Question forcefully posted.")
+        else:
+            time_diff = (last_post_time + datetime.timedelta(hours=interval)) - now
+            hours, remainder = divmod(time_diff.seconds, 3600)
+            minutes = remainder // 60
+            seconds = remainder % 60
+            await ctx.send(f"Cannot post a question yet. Time left for next question post: {hours} hours, {minutes} minutes, {seconds} seconds")
+            
     async def random_question(self):
         await self.bot.wait_until_ready()
         while True:
@@ -123,22 +157,28 @@ class Engagement(commands.Cog):
                 active = await self.config.guild(guild).active()
                 embed_active = await self.config.guild(guild).embed_active()
                 if active:
-                    role_id = await self.config.guild(guild).role()
-                    role = guild.get_role(role_id)
-                    channel_id = await self.config.guild(guild).channel()
-                    channel = guild.get_channel(channel_id)
-                    questions = await self.config.guild(guild).questions()
-                    if role and channel and questions:
-                        question = random.choice(questions)
-                        if embed_active:
-                            embed_color_value = await self.config.guild(guild).embed_color()
-                            embed_color = discord.Color(embed_color_value) if embed_color_value else discord.Color.random()
-                            embed = discord.Embed(title="Random Question", description=question, color=embed_color)
-                            await channel.send(f"{role.mention}", embed=embed)
-                        else:
-                            await channel.send(f"{role.mention} {question}")
-            interval = await self.config.guild(guild).interval()
-            await asyncio.sleep(interval * 3600)
-
+                    last_post_time = await self.config.guild(guild).last_post_time()
+                    interval = await self.config.guild(guild).interval()
+                    if last_post_time is None or (last_post_time + datetime.timedelta(hours=interval)) <= datetime.datetime.now():
+                        await self.send_random_question(guild)
+            await asyncio.sleep(60)  # Check every minute
+            
+    async def send_random_question(self, guild):
+        role_id = await self.config.guild(guild).role()
+        role = guild.get_role(role_id)
+        channel_id = await self.config.guild(guild).channel()
+        channel = guild.get_channel(channel_id)
+        questions = await self.config.guild(guild).questions()
+        if role and channel and questions:
+            question = random.choice(questions)
+            if embed_active:
+                embed_color_value = await self.config.guild(guild).embed_color()
+                embed_color = discord.Color(embed_color_value) if embed_color_value else discord.Color.random()
+                embed = discord.Embed(title="Random Question", description=question, color=embed_color)
+                await channel.send(f"{role.mention}", embed=embed)
+            else:
+                await channel.send(f"{role.mention} {question}")
+            await self.config.guild(guild).last_post_time.set(datetime.datetime.now())
+            
 def setup(bot):
     bot.add_cog(Engagement(bot))
