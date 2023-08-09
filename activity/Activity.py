@@ -2,6 +2,7 @@ import discord
 from redbot.core import commands, Config, checks
 import random
 import asyncio
+import time
 
 class Engagement(commands.Cog):
     """Server engagement with random questions."""
@@ -13,7 +14,7 @@ class Engagement(commands.Cog):
         default_settings = {
             "questions": [],
             "role": None,
-            "interval": 3,  # Default interval is 3 hours
+            "interval": 180,  # Default interval is 3 hours in minutes
             "channel": None,
             "active": False,
             "embed_active": False,
@@ -55,10 +56,10 @@ class Engagement(commands.Cog):
         await ctx.send(f"Activity role set to: {role.mention}")
         
     @activity.command(name="interval")
-    async def activity_interval(self, ctx, hours: int):
-        """Set the interval for sending questions (in hours)."""
-        await self.config.guild(ctx.guild).interval.set(hours)
-        await ctx.send(f"Question interval set to: {hours} hours")
+    async def activity_interval(self, ctx, minutes: int):
+        """Set the interval for sending questions (in minutes)."""
+        await self.config.guild(ctx.guild).interval.set(minutes)
+        await ctx.send(f"Question interval set to: {minutes} minutes")
         self.question_task.cancel()
         self.question_task = self.bot.loop.create_task(self.random_question())
         
@@ -84,7 +85,7 @@ class Engagement(commands.Cog):
         if setting:
             if setting == "interval":
                 interval = await self.config.guild(ctx.guild).interval()
-                await ctx.send(f"Current interval: {interval} hours")
+                await ctx.send(f"Current interval: {interval} minutes")
             elif setting == "role":
                 role_id = await self.config.guild(ctx.guild).role()
                 role = ctx.guild.get_role(role_id)
@@ -95,7 +96,7 @@ class Engagement(commands.Cog):
             role = ctx.guild.get_role(role_id)
             questions = await self.config.guild(ctx.guild).questions()
             question_list = "\n".join(questions)
-            await ctx.send(f"Current settings:\nInterval: {interval} hours\nRole: {role.mention}\nQuestions:\n{question_list}")
+            await ctx.send(f"Current settings:\nInterval: {interval} minutes\nRole: {role.mention}\nQuestions:\n{question_list}")
             
     @activity_embed.command(name="toggle")
     async def activity_embed_toggle(self, ctx):
@@ -128,7 +129,7 @@ class Engagement(commands.Cog):
         last_post_time = await self.config.guild(ctx.guild).last_post_time()
         interval = await self.config.guild(ctx.guild).interval()
         if last_post_time:
-            time_left = (last_post_time + (interval * 3600)) - ctx.message.created_at.timestamp()
+            time_left = (last_post_time + (interval * 60)) - time.time()
             hours_left = int(time_left // 3600)
             minutes_left = int((time_left % 3600) // 60)
             await ctx.send(f"Time left for the next post: {hours_left} hours and {minutes_left} minutes")
@@ -142,7 +143,8 @@ class Engagement(commands.Cog):
                 active = await self.config.guild(guild).active()
                 embed_active = await self.config.guild(guild).embed_active()
                 last_post_time = await self.config.guild(guild).last_post_time()
-                if active and (not last_post_time or (last_post_time + (interval * 3600)) <= time.time()):
+                interval = await self.config.guild(guild).interval()
+                if active and (not last_post_time or (last_post_time + (interval * 60)) <= time.time()):
                     role_id = await self.config.guild(guild).role()
                     role = guild.get_role(role_id)
                     channel_id = await self.config.guild(guild).channel()
