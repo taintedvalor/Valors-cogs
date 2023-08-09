@@ -85,7 +85,9 @@ class Engagement(commands.Cog):
             interval = await self.config.guild(ctx.guild).interval()
             role_id = await self.config.guild(ctx.guild).role()
             role = ctx.guild.get_role(role_id)
-            await ctx.send(f"Current settings:\nInterval: {interval} hours\nRole: {role.mention}")
+            questions = await self.config.guild(ctx.guild).questions()
+            question_list = "\n".join(questions)
+            await ctx.send(f"Current settings:\nInterval: {interval} hours\nRole: {role.mention}\nQuestions:\n{question_list}")
             
     async def random_question(self):
         await self.bot.wait_until_ready()
