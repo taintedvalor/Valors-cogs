@@ -13,7 +13,7 @@ class Engagement(commands.Cog):
         default_settings = {
             "questions": [],
             "role": None,
-            "interval": 0,
+            "interval": 3,  # Default interval is 3 hours
             "channel": None,
             "active": False
         }
