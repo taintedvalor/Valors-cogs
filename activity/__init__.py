@@ -1,5 +1,5 @@
-from .Activity import Activity
+from .Activity import Engagement
 
 
 async def setup(bot):
-    await bot.add_cog(Activity(bot))
+    await bot.add_cog(Engagement(bot))
