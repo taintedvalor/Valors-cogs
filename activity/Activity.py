@@ -119,8 +119,8 @@ class Engagement(commands.Cog):
             await self.config.guild(ctx.guild).embed_color.clear()
             await ctx.send("Embed color customization cleared")
             
-    @commands.command(name="timeleft")
-    async def time_left(self, ctx):
+    @activity.command(name="timeleft")
+    async def activity_time_left(self, ctx):
         """Check the time left for the next question post."""
         last_post_time = await self.config.guild(ctx.guild).last_post_time()
         interval = await self.config.guild(ctx.guild).interval()
@@ -134,8 +134,8 @@ class Engagement(commands.Cog):
             seconds = remainder % 60
             await ctx.send(f"Time left for next question post: {hours} hours, {minutes} minutes, {seconds} seconds")
             
-    @commands.command(name="forcepost")
-    async def force_post(self, ctx):
+    @activity.command(name="forcepost")
+    async def activity_force_post(self, ctx):
         """Forcefully send a question post."""
         last_post_time = await self.config.guild(ctx.guild).last_post_time()
         now = datetime.datetime.now()
