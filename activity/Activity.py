@@ -102,7 +102,8 @@ class Engagement(commands.Cog):
                     questions = await self.config.guild(guild).questions()
                     if role and channel and questions:
                         question = random.choice(questions)
-                        await channel.send(f"{role.mention} {question}")
+                        embed = discord.Embed(title="Random Question", description=question, color=discord.Color.random())
+                        await channel.send(f"{role.mention}", embed=embed)
             interval = await self.config.guild(guild).interval()
             await asyncio.sleep(interval * 3600)
 
