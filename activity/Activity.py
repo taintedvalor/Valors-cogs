@@ -156,7 +156,7 @@ class Engagement(commands.Cog):
                             embed_color_value = await self.config.guild(guild).embed_color()
                             embed_color = discord.Color(embed_color_value) if embed_color_value else discord.Color.random()
                             embed = discord.Embed(title="Random Question", description=question, color=embed_color)
-                            await channel.send(f"{role.mention}", embed=embed)
+                            await channel.send(role.mention, embed=embed)  # Mention the role here
                         else:
                             await channel.send(f"{role.mention} {question}")
                         await self.config.guild(guild).last_post_time.set(time.time())
@@ -176,7 +176,7 @@ class Engagement(commands.Cog):
                 embed_color_value = await self.config.guild(guild).embed_color()
                 embed_color = discord.Color(embed_color_value) if embed_color_value else discord.Color.random()
                 embed = discord.Embed(title="Random Question", description=question, color=embed_color)
-                await channel.send(role.mention, embed=embed)
+                await channel.send(role.mention, embed=embed)  # Mention the role here
             else:
                 await channel.send(f"{role.mention} {question}")
             await self.config.guild(guild).last_post_time.set(time.time())
