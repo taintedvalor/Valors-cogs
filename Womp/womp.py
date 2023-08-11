@@ -1,4 +1,3 @@
-
 import discord
 from redbot.core import commands, Config
 import random
@@ -39,7 +38,10 @@ class Womp(commands.Cog):
                 for char in " womp" * random_amount
             ])
             
-            punctuation = random.choice(['.', '!', '?'])
+            punctuation = random.choice(['.', '!', '?', '~'])  # Added '~' as optional punctuation
+            if punctuation == '~':
+                punctuation = random.choice(['.', '!', '?'])  # Replace with your preferred default punctuation
+            
             capitalized_womp_effect = ' '.join([
                 word.capitalize() if i % 2 == 0 else word
                 for i, word in enumerate(womp_effect.split())
