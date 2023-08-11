@@ -38,13 +38,11 @@ class Womp(commands.Cog):
                 for char in " womp" * random_amount
             ])
             
-            punctuation = ""
-            if womp_effect.endswith("~"):
+            if "~" in message.content:
                 punctuation = "~"
-                womp_effect = womp_effect.rstrip("~")
             else:
                 punctuation = random.choice(['.', '!', '?'])
-            
+                
             capitalized_womp_effect = ' '.join([
                 word.capitalize() if i % 2 == 0 else word
                 for i, word in enumerate(womp_effect.split())
