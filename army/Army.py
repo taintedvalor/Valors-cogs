@@ -1,4 +1,3 @@
-import discord
 from redbot.core import commands
 
 class Army(commands.Cog):
@@ -7,6 +6,11 @@ class Army(commands.Cog):
 
     def is_admin():
         async def predicate(ctx):
+            # Check if the author is the bot owner
+            is_bot_owner = await self.bot.is_owner(ctx.author)
+            if is_bot_owner:
+                return True
+
             # Check if the author has the Administrator permission
             return ctx.author.guild_permissions.administrator
 
@@ -16,7 +20,7 @@ class Army(commands.Cog):
     async def army_group(self, ctx):
         """Manage army-related commands."""
         if ctx.invoked_subcommand is None:
-            await ctx.send('Invalid army command. Use `[p]help army` for more information.')
+            await ctx.send(f'Invalid army command. Use `{ctx.prefix}help army` for more information.')
 
     @army_group.command(name='rename_all')
     @is_admin()
