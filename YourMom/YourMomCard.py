@@ -9,6 +9,11 @@ class YourMomCard(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         content = message.content.lower()
+        
+        # Check if the message author is the RedBot instance
+        if message.author.id == self.bot.user.id:
+            return
+
         if any(trigger in content for trigger in ['hi mom', 'your mom', 'mum', 'hello mom']):
             response = self.get_random_response(message.author.display_name)
             await message.channel.send(response)
