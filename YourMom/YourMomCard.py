@@ -21,7 +21,7 @@ class YourMomCard(commands.Cog):
     def get_random_response(self, user_name):
         responses = [
             f"Hi {user_name}'s mom! 🌟",
-            f"{member.mention}, mom says hi",
+            f"mom says hi",
             f"Is that you, mom? I have been looking for you! 👀",
             f"Hi {user_name}! Your mom told me to tell you to clean your room. 🧹",
             f"{user_name}, your mom called. idk why tho 🥦",
