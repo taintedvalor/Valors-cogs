@@ -1,4 +1,5 @@
 from redbot.core import commands
+import discord  # Add this import
 
 class Army(commands.Cog):
     def __init__(self, bot):
@@ -40,4 +41,4 @@ class Army(commands.Cog):
                 print(f"Unable to reset nickname for {member.display_name}")
 
 def setup(bot):
-    bot.add_cog(Army(bot))
+    bot.add_cog(Army(bot)
