@@ -24,5 +24,5 @@ class CheeseArmy(commands.Cog):
                     await member.edit(nick=None)
                     del usernames[member.id]
 
-# Make sure to add this cog to the bot in your main script
-bot.add_cog(CheeseArmy(bot))
+def setup(bot):
+    bot.add_cog(CheeseArmy(bot))
