@@ -22,7 +22,7 @@ class YourMomCard(commands.Cog):
         responses = [
             f"Hi {user_name}'s mom! 🌟",
             f"{user_name}, mom says hi",
-            f"Is that you, {user_name}? I was looking for you! 👀",
+            f"Is that you, mom? I have been looking for you! 👀",
             f"Hi {user_name}! Your mom told me to tell you to clean your room. 🧹",
             f"{user_name}, your mom called. idk why tho 🥦",
             # Additional responses
