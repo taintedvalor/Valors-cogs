@@ -9,18 +9,22 @@ class YourMomCard(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         content = message.content.lower()
-        if 'hi mom' in content:
+        if any(trigger in content for trigger in ['hi mom', 'your mom', 'mum', 'hello mom']):
             response = self.get_random_response(message.author.display_name)
             await message.channel.send(response)
 
     def get_random_response(self, user_name):
         responses = [
             f"Hi {user_name}'s mom! 🌟",
-            f"{user_name}, your mom says hi 👋",
-            f"Is that you, {user_name}? mom i was looking for you! 👀",
+            f"{user_name}, mom says hi",
+            f"Is that you, {user_name}? I was looking for you! 👀",
             f"Hi {user_name}! Your mom told me to tell you to clean your room. 🧹",
-            f"{user_name}, your mom called. idk why tho"
-            # Add more funny responses as needed
+            f"{user_name}, your mom called. idk why tho 🥦",
+            # Additional responses
+            f"hi um {user_name}, your mom and I were just playing",
+            f"{user_name}, your mom and I just finished redecorating the living room. It's fabulous! 💐🖼️",
+            f"Guess what, {user_name}? Your mom and I are having a movie night you will have the house to yourself be good!",
+            f"{user_name}, your mom and I are cooking dinner together. She's teaching me her secret recipes! 🍝👩‍🍳",
         ]
         return random.choice(responses)
 
