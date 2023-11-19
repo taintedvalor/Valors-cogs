@@ -33,7 +33,7 @@ class Bitches(commands.Cog):
             responses = await self.config.bitches_responses()
             return random.choice(responses)
         else:
-            return f"Custom Number: {number}"
+            return f"you have: {number} bitches!"
 
 def setup(bot):
     bot.add_cog(Bitches(bot))
