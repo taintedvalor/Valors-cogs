@@ -40,17 +40,16 @@ class Womp(commands.Cog):
 
             emojis = [':smile:', ':joy:', ':heart_eyes:', ':sunglasses:']  # Add more emojis as needed
 
-            # Check if an emoji is present in the original message
-            if any(char in message.content for char in emojis):
+            # Extract emojis from the message
+            message_emojis = [char for char in message.content if char in emojis]
+
+            # Check if any emojis are present in the original message
+            if message_emojis:
                 punctuation = ""
-                random_emoji = ""
-                for char in emojis:
-                    if char in message.content:
-                        random_emoji = char
-                        break
+                random_emoji = message_emojis[0]  # Use the first emoji found
             else:
                 punctuation = random.choice(['.', '!', '?'])
-                random_emoji = random.choice(emojis)
+                random_emoji = ""
             
             capitalized_womp_effect = ' '.join([
                 word.capitalize() if i % 2 == 0 else word
