@@ -32,32 +32,28 @@ class Womp(commands.Cog):
             min_amount = num_womps
             max_amount = num_womps + 2  # Adjust as needed
             random_amount = random.randint(min_amount, max_amount)
-            
+
             womp_effect = ''.join([
                 f"**{char}**" if char == "womp" else char
                 for char in " womp" * random_amount
             ])
 
-            emojis = [':smile:', ':joy:', ':heart_eyes:', ':sunglasses:']  # Add more emojis as needed
-
-            # Extract emojis from the message
-            message_emojis = [char for char in message.content if char in emojis]
-
-            # Check if any emojis are present in the original message
-            if message_emojis:
-                punctuation = ""
-                random_emoji = message_emojis[0]  # Use the first emoji found
+            if "~" in message.content:
+                punctuation = "~"
             else:
                 punctuation = random.choice(['.', '!', '?'])
-                random_emoji = ""
-            
+
             capitalized_womp_effect = ' '.join([
                 word.capitalize() if i % 2 == 0 else word
                 for i, word in enumerate(womp_effect.split())
             ])
-            
-            response = f"{capitalized_womp_effect} {random_emoji}{punctuation}"
-            
+
+            # Check for emojis in the original message
+            emojis = [str(emoji) for emoji in message.content.split() if emoji.startswith("<") and emoji.endswith(">")]
+
+            # Include emojis in the response
+            response = f"{capitalized_womp_effect} {' '.join(emojis)} {punctuation}"
+
             await message.channel.send(response)
 
 def setup(bot):
