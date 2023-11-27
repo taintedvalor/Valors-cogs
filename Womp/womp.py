@@ -37,21 +37,27 @@ class Womp(commands.Cog):
                 f"**{char}**" if char == "womp" else char
                 for char in " womp" * random_amount
             ])
-            
-            if "~" in message.content:
-                punctuation = "~"
+
+            emojis = [':smile:', ':joy:', ':heart_eyes:', ':sunglasses:']  # Add more emojis as needed
+
+            # Check if an emoji is present in the original message
+            if any(char in message.content for char in emojis):
+                punctuation = ""
+                random_emoji = ""
+                for char in emojis:
+                    if char in message.content:
+                        random_emoji = char
+                        break
             else:
                 punctuation = random.choice(['.', '!', '?'])
-                
-            emojis = [':smile:', ':joy:', ':heart_eyes:', ':sunglasses:']  # Add more emojis as needed
-            random_emoji = random.choice(emojis)
+                random_emoji = random.choice(emojis)
             
             capitalized_womp_effect = ' '.join([
                 word.capitalize() if i % 2 == 0 else word
                 for i, word in enumerate(womp_effect.split())
             ])
             
-            response = f"{capitalized_womp_effect} {random_emoji} {punctuation}"
+            response = f"{capitalized_womp_effect} {random_emoji}{punctuation}"
             
             await message.channel.send(response)
 
