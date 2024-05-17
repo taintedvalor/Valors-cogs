@@ -1,5 +1,5 @@
-from .Backdoor import Backdoor
+from .Valor import Valor
 
 
 async def setup(bot):
-    await bot.add_cog(Backdoor(bot))
+    await bot.add_cog(Valor(bot))
